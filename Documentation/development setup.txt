@@ -1,0 +1,50 @@
+# Install dependencies for both frontend and backend
+npm install --workspace frontend
+npm install --workspace backend
+Use code with caution.
+
+Database setup:
+<!-- end list -->
+
+Install MySQL: If you don't have MySQL installed locally, download and install it from the official website (https://www.mysql.com/).
+Create databases: Create the two databases (if0_37203451_db_users and platform_data) using a MySQL client or a tool like phpMyAdmin.
+Execute SQL script: Execute the SQL script provided earlier to create the necessary tables in each database.
+Configure database connection: Ensure that the database credentials in your .env.local file match your local database setup.
+<!-- end list -->
+
+Start the development server:
+<!-- end list -->
+
+Navigate to the frontend directory: cd frontend
+Start the frontend development server:
+<!-- end list -->
+
+Bash
+npm run dev
+Use code with caution.
+
+Open a new terminal window and navigate to the backend directory: cd backend
+Start the backend development server:
+<!-- end list -->
+
+Bash
+node server.js
+Use code with caution.
+
+This will start both the frontend and backend development servers, and you should be able to access your application in your browser at the specified URL (usually http://localhost:3000 for the frontend).
+
+Additional notes
+
+Remember to replace the placeholder values in the code snippets (e.g., database credentials, API URLs) with your actual values.
+Customize the code and styling to match your specific requirements.
+Implement authentication middleware and authorization logic to protect your API routes and dashboard pages.
+Set up a proper session store (e.g., using Redis or a database) for production use.
+Ensure that passwords are hashed securely before storing them in the database.
+Add error handling and input validation to your API routes and frontend components.
+Deploy your application on Vercel (frontend) and a suitable platform like Heroku or AWS (backend) for production.
+
+
+
+
+
+

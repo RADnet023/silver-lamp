@@ -1,0 +1,126 @@
+-- Database: if0_37203451_db_users
+
+-- Create the clients table
+CREATE TABLE clients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL, -- Store hashed passwords
+    email VARCHAR(255) UNIQUE,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    phone VARCHAR(20),
+    address TEXT,
+    status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
+    email_verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE   
+ TABLE client_details (
+    client_id INT PRIMARY KEY,
+    birthdate DATE,
+    country VARCHAR(255),
+    city VARCHAR(255),
+    zipcode VARCHAR(20),
+    occupation VARCHAR(255),
+    interests TEXT,
+    FOREIGN KEY (client_id) REFERENCES clients(id)
+);
+
+CREATE TABLE login_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    logout_time TIMESTAMP NULL,
+    ip_address VARCHAR(45),
+    mac_address VARCHAR(20),
+    user_agent VARCHAR(255),
+    FOREIGN KEY (client_id) REFERENCES clients(id)
+);
+
+CREATE TABLE authorized_ips (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    auth_key VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id)
+);
+
+-- ... (other tables like client_queries, audit_trails, etc.) ...
+
+
+-- Database: platform_data
+
+-- Chat related tables
+CREATE TABLE conversations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE participants (
+    conversation_id INT NOT NULL,
+    client_id INT NOT NULL,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (conversation_id, client_id),
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id),
+    FOREIGN KEY (client_id) REFERENCES if0_37203451_db_users.clients(id) -- Reference clients table in the other database
+);
+
+CREATE TABLE messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    conversation_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    content TEXT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id),
+    FOREIGN KEY (sender_id) REFERENCES if0_37203451_db_users.clients(id) -- Reference clients table in the other database
+);
+
+-- Feed related tables
+CREATE TABLE posts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES if0_37203451_db_users.clients(id) -- Reference clients table in the other database
+);
+
+CREATE TABLE stories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    media_url VARCHAR(255) NOT NULL, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES if0_37203451_db_users.clients(id) -- Reference clients table in the other database
+);
+
+-- ... (other tables for wallet, games, etc.) ...
+Use code with caution.
+
+Explanation
+
+if0_37203451_db_users: This database stores core user-related information:
+
+clients: Stores basic client information (username, password, email, etc.).
+client_details: Stores additional client details (birthdate, address, etc.).
+login_logs: Tracks client login attempts (time, IP address, user agent).
+authorized_ips: Stores authorized IP addresses and authentication keys.
+(Other potential tables for user-specific data)
+platform_data:  This database stores platform-specific data, separated for modularity and potential scalability:
+
+Chat-related tables (conversations, participants, messages)
+Feed-related tables (posts, stories)
+(Other tables for wallet, games, trading, etc.)
+Key points
+
+Separation of concerns: Separating user data and platform data into different databases can improve organization, scalability, and potentially security.
+Foreign keys: Foreign key constraints ensure referential integrity between tables.
+Data types: Appropriate data types are used for each column (e.g., VARCHAR, INT, TIMESTAMP, ENUM, JSON).
+Unique constraints: UNIQUE constraints enforce uniqueness for certain fields (e.g., username, email, wallet_address).
+Important notes
+
+Remember to adjust the table and column names, data types, and constraints based on your specific requirements.
+Consider adding indexes to improve query performance.
+Implement proper security measures to protect sensitive data.
+This schema provides a solid foundation for your platform. You can expand it by adding more tables and features as your application evolves

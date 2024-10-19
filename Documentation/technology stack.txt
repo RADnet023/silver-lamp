@@ -1,0 +1,71 @@
+Technologies Used in SecureAuth Platform
+
+This section provides a detailed overview of the technologies employed in building the SecureAuth Platform, including their functionalities and roles in the application.
+
+1. Frontend Technologies
+
+  React: A JavaScript library for building user interfaces. It allows for creating reusable components and efficiently managing the application's state and data flow.   
+
+Purpose: To build dynamic and interactive user interfaces for the platform, including the login page, dashboards, chat, feed, and wallet components.
+Features:
+Component-based architecture for modularity and reusability.
+Virtual DOM for efficient updates and rendering.   
+JSX syntax for declarative UI definition.   
+Large and active community with extensive resources and support.   
+HTML: The standard markup language for creating web pages.   
+
+Purpose: To structure the content of the web pages and define the basic elements of the user interface.   
+  CSS:  A stylesheet language used for describing the presentation of web pages.   
+
+Purpose: To style the visual appearance of the platform, including layout, colors, fonts, and responsiveness.   
+  JavaScript:  A scripting language that enables dynamic and interactive behavior on web pages.   
+
+Purpose: To handle client-side logic, user interactions, and communication with the backend API.
+2. Backend Technologies
+
+  Node.js:  A JavaScript runtime environment that allows for executing JavaScript code outside of a web browser.   
+
+Purpose: To build the backend API for the platform, handling user authentication, data storage, and server-side logic.
+Features:
+Asynchronous and event-driven architecture for high performance.   
+NPM (Node Package Manager) for managing packages and dependencies.   
+Large and active community with extensive modules and libraries.   
+  Express.js:  A minimal and flexible Node.js web application framework.   
+
+Purpose: To simplify the development of the backend API by providing routing, middleware, and other helpful features.
+Features:
+Routing for defining API endpoints.   
+Middleware for handling requests and responses.   
+Template engines for rendering dynamic content.   
+3. Database Technology
+
+MySQL: A popular open-source relational database management system.
+Purpose: To store and manage the platform's data, including user information, transactions, and other relevant data.
+Features:
+Relational data model for structured data organization.
+SQL (Structured Query Language) for data manipulation and querying.
+Scalability and performance for handling large datasets.
+  
+4. Real-time Communication Technology
+
+Socket.io: A JavaScript library for real-time, bidirectional communication between web clients and servers.
+Purpose: To enable real-time features in the platform, such as chat and notifications.
+Features:
+WebSockets support for efficient and low-latency communication.   
+Event-based communication model.
+Room support for grouping users and broadcasting messages.
+  
+5. Deployment Technology
+
+Vercel: A cloud platform for deploying and hosting frontend applications and serverless functions.
+Purpose: To deploy and host the React frontend of the platform, providing serverless functions for backend logic and API endpoints.
+Features:
+Serverless functions for running backend code.
+Automatic deployment and scaling.
+Built-in CI/CD (Continuous Integration/Continuous Deployment).
+  
+6. Other Libraries and Modules
+
+serverless-mysql: A library for connecting to MySQL databases in serverless environments.   
+express-session: Middleware for managing user sessions in Express.js.   
+crypto: Node.js module for cryptographic operations (used for generating authorization keys).

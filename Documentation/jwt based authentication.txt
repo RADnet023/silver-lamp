@@ -1,0 +1,83 @@
+// api/auth/login.js
+
+// ... other imports ...
+const jwt = require('jsonwebtoken');
+
+// ... other middleware ...
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const results = await mysql.query('SELECT * FROM clients WHERE username = ?', [username]);
+
+    if (results.length > 0 && password_verify(password, results[0].password)) {
+      // Generate JWT
+      const token = jwt.sign({ userId: results[0].id }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' }); // Replace with your actual secret key
+
+      // Set cookie with JWT (HTTP-only)
+      res.cookie('token', token, { httpOnly: true });
+
+      // ... (IP authorization and redirect logic as before) ...
+    } else {
+      res.status(401).json({ message: 'Invalid credentials' });
+    }
+  } catch (error) {
+    // ... error handling ...
+  }
+});
+
+// Authentication middleware (to protect routes)
+const authenticateJWT = (req, res, next) => {
+  const token = req.cookies.token;
+
+  if (token) {
+    jwt.verify(token, process.env.JWT_SECRET_KEY, (err, user) => { // Replace with your actual secret key
+      if (err) {
+        return res.status(403).json({ message: 'Invalid token' });
+      }
+      req.user = user;
+      next();
+    });
+  } else {
+    res.status(401).json({ message: 'Authorization   
+ token missing' });
+  }
+};
+
+// Example usage of authentication middleware
+app.get('/api/users/profile', authenticateJWT, async (req, res) => {
+  // ... (route logic - this route is now protected) ...
+});
+Use code with caution.
+
+Explanation
+
+JWT generation:
+
+Upon successful login, a JWT is generated using the jsonwebtoken library.
+The JWT payload includes the userId.
+The JWT is signed with a secret key (stored in the JWT_SECRET_KEY environment variable).
+An expiration time is set for the JWT (e.g., expiresIn: '1h').
+Setting the cookie:
+
+The generated JWT is set as an HTTP-only cookie named token.
+The httpOnly flag prevents client-side JavaScript from accessing the cookie, enhancing security against XSS attacks.
+Authentication middleware (authenticateJWT):
+
+This middleware function is used to protect API routes that require authentication.
+It extracts the token from the cookies.
+It verifies the token using the jsonwebtoken library and the same secret key.
+If the token is valid, it decodes the payload and attaches the user information (req.user) to the request object.
+If the token is invalid or missing, it returns a 401 (Unauthorized) or 403 (Forbidden) error.
+Key benefits of JWT authentication
+
+Statelessness: JWTs are self-contained and contain all the necessary information about the user, making the backend stateless.
+Security: JWTs are digitally signed, ensuring their integrity.
+Scalability: JWTs can be easily scaled as they don't require server-side session storage.
+Important notes
+
+Secret key protection: Store your JWT secret key securely as an environment variable. Never hardcode it in your code.
+Token expiration: Set an appropriate expiration time for your JWTs to mitigate the risk of unauthorized access if a token is compromised.
+Secure session store: For production, use a secure session store (e.g., Redis or a database) to store session data instead of the in-memory store used in the example.
+HTTPS: Always use HTTPS to ensure secure communication and protect the JWT in transit.
