@@ -1,0 +1,137 @@
+// pages/dashboard.js
+
+import React, { useState, useEffect } from 'react';
+
+export default function Dashboard() {
+  const [profile, setProfile] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const profileResponse = await fetch('/api/users/profile');
+        const notificationsResponse = await fetch('/api/notifications');
+
+        if (profileResponse.ok && notificationsResponse.ok) {
+          const profileData = await profileResponse.json();
+          const notificationsData = await notificationsResponse.json();
+          setProfile(profileData);
+          setNotifications(notificationsData);
+        } else {
+          // Handle errors (e.g., unauthorized access, server error)
+          const profileError = await profileResponse.json();
+          const notificationsError = await notificationsResponse.json();
+          setError(profileError.message || notificationsError.message || 'An error occurred');
+        }
+      } catch (error) {
+        console.error(error);
+        setError('An error occurred');
+      }
+    };
+
+    fetchUserData();
+  }, []); // Empty dependency array ensures this runs only once after component mounts
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', { method: 'POST' });
+      if (response.ok) {
+        // Redirect to login page after logout
+        window.location.href = '/login';
+      } else {
+        // Handle logout error
+        const data = await response.json();
+        setError(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      setError('An error occurred');
+    }
+  };
+
+  if (error) {
+    return <div className="error">{error}</div>;
+  }
+
+  if (!profile) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div>
+      <h1>Welcome, {profile.username}!</h1>
+      <div>
+        <h2>Profile</h2>
+        {/* Display profile information */}
+        <p><strong>Username:</strong> {profile.username}</p>
+        <p><strong>Email:</strong> {profile.email}</p>
+        {/* ... other profile details ... */}
+      </div>
+      <div>
+        <h2>Notifications</h2>
+        {/* Display notifications */}
+        <ul>
+          {notifications.map((notification) => (
+            <li key={notification.id}>{notification.message}</li>
+          ))}
+        </ul>
+      </div>
+      {/* Navigation links */}
+      <nav>
+        <ul>
+          <li><a href="/chat">Chat</a></li>
+          <li><a href="/feed">Feed</a></li>
+          <li><a href="/wallet">Wallet</a></li>
+          {/* ... other navigation links ... */}
+        </ul>
+      </nav>
+      <button onClick={handleLogout}>Logout</button>
+    </div>
+  );
+}
+Use code with caution.
+
+Explanation
+
+State variables:
+
+profile: Stores the user's profile data.
+notifications: Stores the user's notifications.
+error: Stores any error messages to display.
+useEffect hook:
+
+Fetches user profile data from /api/users/profile.
+Fetches user notifications from /api/notifications.
+Updates the state variables with the fetched data.
+Handles potential errors during data fetching.
+handleLogout function:
+
+Sends a POST request to /api/auth/logout to log the user out.
+Handles the API response and redirects to the login page on success.
+Handles potential errors during logout.
+JSX structure:
+
+Displays a welcome message with the user's username.
+Displays the user's profile information.
+Displays the user's notifications.
+Provides navigation links to other sections of the application.
+Includes a logout button.
+API endpoints
+
+/api/users/profile (GET): Retrieves the authenticated user's profile information.
+/api/notifications (GET): Fetches notifications for the authenticated user.
+Additional considerations
+
+Authentication: Ensure that the dashboard is protected with authentication middleware to prevent unauthorized access.
+Data fetching: Use appropriate data fetching techniques (e.g., fetch, Axios, SWR, React Query) to retrieve data from the API endpoints.
+Error handling: Handle API errors and network issues gracefully.
+User experience: Design a user-friendly and informative dashboard.
+Styling: Apply CSS to style the dashboard elements.
+Real-time updates: Consider using Socket.io to provide real-time updates for notifications or other dynamic content.
+
+
+
+
+
+

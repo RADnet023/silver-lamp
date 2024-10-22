@@ -1,0 +1,93 @@
+-- Database: repositories
+
+CREATE TABLE repositories (
+    repository_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    size DECIMAL(15, 2) DEFAULT 0,
+    file_count INT DEFAULT 0,
+    status ENUM('active', 'locked') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id)   
+ ON DELETE CASCADE
+);
+
+CREATE TABLE repository_files (
+    file_id INT AUTO_INCREMENT PRIMARY KEY,
+    repository_id INT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_type VARCHAR(255),
+    size DECIMAL(15, 2),
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (repository_id) REFERENCES repositories(repository_id) ON DELETE CASCADE
+);
+
+-- Other tables in the 'repositories' database
+
+CREATE TABLE repository_locking_history (
+    lock_id INT AUTO_INCREMENT PRIMARY KEY,
+    repository_id INT NOT NULL,
+    locked_by INT NOT NULL, -- User who locked the repository
+    locked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    unlocked_at TIMESTAMP NULL, -- Timestamp when the repository was unlocked (if applicable)
+    stake_amount DECIMAL(10, 2) NOT NULL, -- Amount of RAD staked for locking
+    FOREIGN KEY (repository_id) REFERENCES repositories(repository_id) ON DELETE CASCADE,
+    FOREIGN KEY (locked_by) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE repository_access_logs (
+    access_log_id INT AUTO_INCREMENT PRIMARY KEY,
+    repository_id INT NOT NULL,
+    accessed_by INT NOT NULL, -- User who accessed the repository
+    accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    action ENUM('read', 'write', 'delete') NOT NULL, -- Type of access (read, write, delete)
+    ip_address VARCHAR(45),
+    FOREIGN KEY (repository_id) REFERENCES repositories(repository_id) ON DELETE CASCADE,
+    FOREIGN KEY (accessed_by) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE repository_collaborators (
+    collaborator_id INT AUTO_INCREMENT PRIMARY KEY,
+    repository_id INT NOT NULL,
+    user_id INT NOT NULL,
+    permission_level ENUM('read', 'write', 'admin') NOT NULL, -- Access level for the collaborator
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (repository_id) REFERENCES repositories(repository_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+Use code with caution.
+
+Explanation of tables:
+repositories: Repository details (name, size, file count, status, etc.).
+repository_files: Information about files within each repository.
+repository_locking_history:
+
+lock_id: Unique identifier for each locking event.
+repository_id: ID of the repository that was locked.
+locked_by: ID of the user who locked the repository.
+locked_at: Timestamp of when the repository was locked.
+unlocked_at: Timestamp of when the repository was unlocked (if applicable).
+stake_amount: Amount of RAD tokens staked to lock the repository.
+repository_access_logs:
+
+access_log_id: Unique identifier for each access log entry.
+repository_id: ID of the repository that was accessed.
+accessed_by: ID of the user who accessed the repository.
+accessed_at: Timestamp of the access event.
+action: Type of action performed (read, write, or delete).
+ip_address: IP address of the user who accessed the repository.
+repository_collaborators:
+
+collaborator_id: Unique identifier for each collaborator.
+repository_id: ID of the repository.
+user_id: ID of the collaborator (user).
+permission_level: Access level granted to the collaborator (read, write, or admin).
+added_at: Timestamp of when the collaborator was added.
+Key points:
+
+repository_locking_history: Tracks the history of locking and unlocking events for repositories, including who locked the repository, when it was locked/unlocked, and the stake amount.
+repository_access_logs: Provides an audit trail of repository access, recording who accessed the repository, when, what action they performed, and their IP address.
+repository_collaborators: Allows users to collaborate on repositories by granting access to other users with different permission levels.
+Relationships: Foreign key constraints ensure referential integrity between tables.
+ON DELETE CASCADE: This clause ensures that related records are automatically deleted when a parent record is deleted (e.g., if a repository is deleted, its associated locking history, access logs, and collaborators are also deleted).

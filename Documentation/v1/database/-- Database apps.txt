@@ -1,0 +1,102 @@
+-- Database: apps
+
+CREATE TABLE apps (
+    app_id INT AUTO_INCREMENT PRIMARY KEY,
+    creator_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    category VARCHAR(255),
+    icon_url VARCHAR(255),
+    repository_url VARCHAR(255),
+    docker_image VARCHAR(255),
+    is_game BOOLEAN DEFAULT FALSE, 
+    status ENUM('pending', 'approved', 'rejected', 'suspended') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (creator_id) REFERENCES users.clients(id)   
+ ON DELETE CASCADE
+);
+
+CREATE TABLE app_ratings (
+    rating_id INT AUTO_INCREMENT PRIMARY KEY,
+    app_id INT NOT NULL,
+    user_id INT NOT NULL,
+    rating INT,
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+-- Other tables in the 'apps' database
+
+CREATE TABLE app_categories (
+    category_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE app_category_assignments (
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    app_id INT NOT NULL,
+    category_id INT NOT NULL,
+    FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES app_categories(category_id) ON DELETE CASCADE
+);
+
+CREATE TABLE app_tags (  -- For adding tags to apps (e.g., "productivity", "finance", "puzzle")
+    tag_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE app_tag_assignments (  -- Assigns tags to apps
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    app_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES app_tags(tag_id) ON DELETE CASCADE
+);
+
+CREATE TABLE app_screenshots (  -- Stores URLs of app screenshots
+    screenshot_id INT AUTO_INCREMENT PRIMARY KEY,
+    app_id INT NOT NULL,
+    screenshot_url VARCHAR(255) NOT NULL,
+    FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE
+);
+
+CREATE TABLE app_versions (  -- Tracks different versions of an app
+    version_id INT AUTO_INCREMENT PRIMARY KEY,
+    app_id INT NOT NULL,
+    version_number VARCHAR(255) NOT NULL,
+    release_notes TEXT,
+    released_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE
+);
+
+CREATE TABLE app_dependencies (  -- Stores information about app dependencies (libraries, frameworks)
+    dependency_id INT AUTO_INCREMENT PRIMARY KEY,
+    app_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    version VARCHAR(255),
+    FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE
+);
+Use code with caution.
+
+Explanation of added tables:
+
+apps.is_game: Added a boolean field is_game to the apps table to indicate whether an app is a game.
+
+app_categories and app_category_assignments:  These tables allow you to define categories (e.g., "Games," "Productivity," "Finance") and assign multiple categories to each app. This provides a flexible way to categorize apps and allows for better organization and browsing in the marketplace.
+
+app_tags and app_tag_assignments:  These tables allow you to add tags (e.g., "productivity," "finance," "puzzle," "multiplayer") to apps. Tags provide additional ways to describe and categorize apps, making it easier for users to find relevant apps.
+
+app_screenshots:  This table stores URLs of screenshots for each app. Screenshots help users visualize the app's interface and functionality before using it.
+
+app_versions:  This table tracks different versions of an app. It can be used to store version numbers, release notes, and release dates for each version, providing a history of app updates.
+
+app_dependencies:  This table stores information about the dependencies (libraries, frameworks) used by an app. This information can be useful for security analysis, compatibility checks, and providing insights to developers.
+
+Key points:
+
+Relationships: Foreign key constraints establish relationships between the tables, ensuring data integrity and consistency.
+ON DELETE CASCADE: This clause ensures that related records are automatically deleted when a parent record is deleted (e.g., if an app is deleted, its associated ratings, tags, and screenshots are also deleted).
+Unique constraints: The name fields in app_categories and app_tags have unique constraints to prevent duplicate categories and tags.

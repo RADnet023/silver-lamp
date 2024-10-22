@@ -1,0 +1,118 @@
+-- Database: users
+
+CREATE TABLE clients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL, -- Store bcrypt hashed passwords
+    email VARCHAR(255) UNIQUE,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    phone VARCHAR(20),
+    address TEXT,
+    status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
+    email_verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP   
+
+);
+
+CREATE TABLE client_details (
+    client_id INT PRIMARY KEY,
+    birthdate DATE,
+    country VARCHAR(255),
+    city VARCHAR(255),
+    zipcode VARCHAR(20),
+    occupation VARCHAR(255),
+    interests TEXT,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE login_logs (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    logout_time TIMESTAMP NULL,
+    ip_address VARCHAR(45),
+    user_agent VARCHAR(255),
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE authorized_ips (
+    auth_ip_id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    auth_key VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_settings (
+    settings_id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    theme VARCHAR(255) DEFAULT 'light',
+    notifications JSON,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+);
+
+-- Other potential tables in the 'users' database
+CREATE TABLE user_roles (  -- For assigning roles to users (e.g., 'admin', 'moderator', 'user')
+    role_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE user_role_assignments (  -- Assigns roles to users
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    role_id INT NOT NULL,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES user_roles(role_id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_permissions (  -- Defines permissions (e.g., 'create_app', 'manage_users')
+    permission_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE role_permission_assignments (  -- Assigns permissions to roles
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    role_id INT NOT NULL,
+    permission_id INT NOT NULL,
+    FOREIGN KEY (role_id) REFERENCES user_roles(role_id) ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES user_permissions(permission_id) ON DELETE CASCADE
+);
+
+Explanation:
+
+users database:  Stores core user information, including:
+
+clients: Basic user account details (username, password, email, etc.).
+client_details: Additional user profile information (birthdate, country, etc.).
+login_logs:
+
+log_id: Unique identifier for each login log entry.
+client_id: ID of the user who logged in.
+login_time: Timestamp of the login event.
+logout_time: Timestamp of the logout event (if applicable).
+ip_address: IP address of the user.
+user_agent: User's browser and operating system information.
+authorized_ips:
+
+auth_ip_id: Unique identifier for each authorized IP address entry.
+client_id: ID of the user.
+ip_address: The authorized IP address.
+auth_key: A unique authentication key (can be used for MFA or other security purposes).
+created_at: Timestamp of when the IP address was authorized.
+user_settings:
+
+settings_id: Unique identifier for each user settings entry.
+client_id: ID of the user.
+theme: Stores the user's preferred theme for the UI.
+notifications: Stores the user's notification preferences as a JSON object (e.g., { "email": true, "push": false, "types": ["new_message", "app_update"] }).
+ON DELETE CASCADE: Added to foreign key constraints to automatically delete related records when a parent record is deleted (e.g., when a user is deleted, their associated repositories, transactions, etc., are also deleted).
+user_roles, user_role_assignments, user_permissions, role_permission_assignments: These tables are added to the users database to implement a role-based access control (RBAC) system. This allows you to define roles (e.g., "admin," "moderator," "user") and assign permissions to those roles, providing fine-grained control over user access to different parts of the platform.
+Key points:
+
+login_logs: Useful for tracking user activity, auditing security events, and identifying suspicious login attempts.
+authorized_ips: Can be used for implementing IP whitelisting or as part of a multi-factor authentication (MFA) system.
+user_settings: Provides a centralized place to store user preferences and customization options.
+JSON fields: The notifications field in user_settings demonstrates how to store complex data structures (like notification preferences) using JSON.

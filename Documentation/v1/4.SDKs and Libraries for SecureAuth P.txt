@@ -1,0 +1,137 @@
+SDKs and Libraries for SecureAuth Platform
+
+To simplify the integration of applications with the SecureAuth Platform, we provide SDKs and libraries in popular programming languages. These SDKs offer convenient methods for interacting with the SecureAuth API, handling authentication, and managing data.
+
+1. JavaScript SDK
+
+Installation:
+Bash
+npm install secureauth-sdk
+Use code with caution.
+
+Usage Example:
+JavaScript
+import SecureAuth from 'secureauth-sdk';
+
+const sdk = new SecureAuth({
+  baseUrl: 'https://api.secureauth.com', // Replace with your API base URL
+});
+
+// Authenticate a user
+sdk.auth
+  .login({ username: 'user123', password: 'password' })
+  .then((response) => {
+    // Store the JWT token
+    const token = response.data.token;
+    sdk.setToken(token);
+
+    // Get user profile
+    return sdk.users.getProfile();
+  })
+  .then((profile) => {
+    console.log('User profile:', profile);
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+
+// Get app details
+sdk.apps.getApp(123).then((app) => {
+  console.log('App details:', app);
+});
+
+// Stake Rad tokens
+sdk.staking.stake(100).then((response) => {
+  console.log('Staking response:', response);
+});
+Use code with caution.
+
+2. Python SDK
+
+Installation:
+Bash
+pip install secureauth-sdk
+Use code with caution.
+
+Usage Example:
+Python
+from secureauth_sdk import SecureAuth
+
+sdk = SecureAuth(base_url='https://api.secureauth.com')
+
+# Authenticate a user
+try:
+    response = sdk.auth.login(username='user123', password='password')
+    token = response['token']
+    sdk.set_token(token)
+
+    # Get user profile
+    profile = sdk.users.get_profile()
+    print("User profile:", profile)
+
+    # Get app details
+    app = sdk.apps.get_app(123)
+    print("App details:", app)
+
+    # Stake Rad tokens
+    response = sdk.staking.stake(100)
+    print("Staking response:", response)
+
+except Exception as e:
+    print("Error:", e)
+Use code with caution.
+
+3. Java SDK
+
+Installation:
+Bash
+// Add the SecureAuth SDK dependency to your project (e.g., Maven, Gradle)
+Use code with caution.
+
+Usage Example:
+Java
+import com.secureauth.sdk.*;
+
+public class SecureAuthExample {
+    public static void main(String[] args) {
+        SecureAuth sdk = new SecureAuth("https://api.secureauth.com");
+
+        try {
+            // Authenticate a user
+            AuthResponse authResponse = sdk.auth().login("user123", "password");
+            String token = authResponse.getToken();
+            sdk.setToken(token);
+
+            // Get user profile
+            UserProfile profile = sdk.users().getProfile();
+            System.out.println("User profile: " + profile);
+
+            // Get app details
+            AppDetails app = sdk.apps().getApp(123);
+            System.out.println("App details: " + app);
+
+            // Stake Rad tokens
+            StakingResponse stakingResponse = sdk.staking().stake(100);
+            System.out.println("Staking response: " + stakingResponse);
+
+        } catch (SecureAuthException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+}
+Use code with caution.
+
+SDK Features
+
+Authentication: Provides methods for user login, registration, and token management.
+API Resource Access: Offers convenient methods for accessing various API resources (users, apps, repositories, etc.).
+Error Handling: Includes built-in error handling to catch and handle API errors.
+Type Safety (in typed languages): Provides type definitions and interfaces for better code clarity and maintainability.
+Documentation: Includes comprehensive documentation with code examples and API usage guides.
+Benefits of Using SDKs
+
+Simplified Development: Reduces boilerplate code and simplifies API interactions.
+Improved Code Readability: Makes code easier to read and understand.
+Reduced Errors: Helps prevent common API integration errors.
+Faster Development: Accelerates development time by providing pre-built functions.
+Easier Maintenance: Simplifies code maintenance and updates.

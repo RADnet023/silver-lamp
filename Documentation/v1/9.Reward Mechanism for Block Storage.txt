@@ -1,0 +1,46 @@
+Reward Mechanism for Block Storage and Verification in SecureAuth
+
+To incentivize users to participate in the distributed ledger system and contribute to the security and stability of the SecureAuth platform, a reward mechanism is implemented for storing and verifying blocks.
+
+1. Roles and Responsibilities
+
+Storage Providers: Users who dedicate storage space on their devices to store copies of transaction blocks.
+Validators: Users who verify the integrity of stored blocks by comparing them with other copies or performing cryptographic checks.
+2. Reward Distribution
+
+Storage Rewards: Users receive Rad tokens for storing blocks. The reward amount is calculated based on:
+
+Storage Duration: The longer a user stores a block, the more rewards they accumulate.
+Storage Space: Users with more storage capacity who store more blocks receive proportionally larger rewards.
+Block Importance: Newer blocks or blocks with higher transaction volumes might be assigned higher rewards to incentivize their storage.
+Verification Rewards: Users receive additional Rad tokens for verifying the integrity of stored blocks. The reward amount is determined by:
+
+Verification Frequency: Users who verify blocks more frequently receive more rewards.
+Verification Accuracy: Users who consistently provide accurate verification results earn higher rewards.
+Network Contribution: Users who contribute to the verification of a larger number of blocks receive greater rewards.
+3. Reward Calculation Formula
+
+The specific reward calculation formula can be adjusted based on platform needs and economic considerations. Here's a possible example:
+
+Storage Reward = (Storage Duration * Storage Space * Block Importance Factor) * Storage Reward Rate
+
+Verification Reward = (Verification Frequency * Verification Accuracy * Network Contribution Factor) * Verification Reward Rate
+Storage Duration: Measured in hours, days, or other time units.
+Storage Space: Measured in GB or TB.
+Block Importance Factor: A multiplier based on the block's importance (e.g., newer blocks have a higher factor).
+Storage Reward Rate: A predefined rate (e.g., 0.001 RAD per GB per day).
+Verification Frequency: Number of verifications performed per day or other time unit.
+Verification Accuracy: Percentage of correct verification results.
+Network Contribution Factor: A multiplier based on the number of blocks verified.
+Verification Reward Rate: A predefined rate (e.g., 0.0005 RAD per verification).
+4. Distribution Process
+
+Automated Rewards: Rewards are calculated and distributed automatically at regular intervals (e.g., daily or weekly).
+Reward Claims: Users might need to actively claim their rewards through the platform's interface.
+Transaction Records: All reward transactions are recorded in the rad_transactions table with the type "reward" and appropriate details.
+Transparency: Users can view their reward history and the calculation breakdown in their account dashboard.
+5.  Additional Considerations
+
+Reward Pool: A portion of the platform's Rad token supply can be allocated to a reward pool specifically for storage and verification rewards.
+Dynamic Adjustment: The reward rates and calculation formula can be adjusted dynamically by the platform administrators based on network usage, storage demand, and economic conditions.
+Anti-Abuse Measures: Implement measures to prevent abuse of the reward system (e.g., Sybil attacks, fake verification results).

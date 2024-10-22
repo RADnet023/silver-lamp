@@ -1,0 +1,619 @@
+API Reference for SecureAuth Platform
+
+Introduction
+
+This document provides detailed specifications for the SecureAuth Platform API. The API follows RESTful principles and uses JSON for data exchange. All requests and responses use the Content-Type: application/json header.
+
+Authentication
+
+Most API endpoints require authentication using JWT (JSON Web Token).  You can obtain a JWT by authenticating with the /api/auth/login endpoint. Include the JWT in the Authorization header of subsequent requests using the Bearer scheme:
+
+Authorization: Bearer <your_jwt_token>
+Error Handling
+
+The API uses standard HTTP status codes to indicate success or failure of requests. Common error codes include:
+
+400 Bad Request: Invalid request data or parameters.
+401 Unauthorized: Missing or invalid authentication token.
+403 Forbidden: Insufficient permissions to access the resource.
+404 Not Found: The requested resource was not found.
+500 Internal Server Error: An unexpected error occurred on the server.   
+Error responses will typically include a JSON object with a message property providing more details about the error.
+
+API Endpoints
+
+1. Authentication
+
+/api/auth/login (POST)
+
+Description: Authenticates a user and returns a JWT.
+Request Body:
+JSON
+{
+  "username": "your_username",
+  "password": "your_password"
+}
+Use code with caution.
+
+Response (200 OK):
+JSON
+{
+  "message": "Login successful",
+  "authKey": "your_auth_key",
+  "token": "your_jwt_token"  // Token also set in an HTTP-only cookie
+}
+Use code with caution.
+
+Error Responses:
+401 Unauthorized: Invalid credentials.
+/api/auth/register (POST)
+
+Description: Registers a new user account.
+Request Body:
+JSON
+{
+  "username": "new_username",
+  "password": "new_password",
+  "email": "user@example.com"
+}
+Use code with caution.
+
+Response (201 Created):
+JSON
+{
+  "message": "User registered successfully"
+}
+Use code with caution.
+
+Error Responses:
+400 Bad Request: Invalid request data (e.g., missing fields, invalid email format).
+409 Conflict: Username or email already exists.
+/api/auth/logout (POST)
+
+Description: Logs out the user by clearing the authentication cookie.
+Response (200 OK):
+JSON
+{
+  "message": "Logout successful"
+}
+Use code with caution.
+
+2. User
+
+/api/users/profile (GET)
+
+Description: Retrieves the authenticated user's profile.
+Authentication: Requires JWT.
+Response (200 OK):
+JSON
+{
+  "id": 123,
+  "username": "your_username",
+  "email": "user@example.com",
+  // ... other user profile data
+}
+Use code with caution.
+
+Error Responses:
+401 Unauthorized: Missing or invalid JWT.
+/api/users/{userId} (GET)
+
+Description: Retrieves a specific user's profile (if allowed).
+Authentication: Requires JWT (with potential authorization checks).
+Path Parameters:
+userId: The ID of the user to retrieve.
+Response (200 OK):
+JSON
+{
+  // ... user profile data
+}
+Use code with caution.
+
+Error Responses:
+401 Unauthorized: Missing or invalid JWT.
+403 Forbidden: Not authorized to access this user's profile.
+404 Not Found: User not found.
+/api/users/{userId} (PUT)
+
+Description: Updates a specific user's profile (if allowed).
+Authentication: Requires JWT (with authorization checks).
+Path Parameters:
+userId: The ID of the user to update.
+Request Body:
+JSON
+{
+  // ... user profile data to update
+}
+Use code with caution.
+
+Response (200 OK):
+JSON
+{
+  "message": "User profile updated successfully"
+}
+Use code with caution.
+
+Error Responses:
+400 Bad Request: Invalid request data.
+401 Unauthorized: Missing or invalid JWT.
+403 Forbidden: Not authorized to update this user's profile.
+404 Not Found: User not found.
+3. Apps
+
+/api/apps (GET)
+
+Description: Retrieves a list of apps (with filtering and sorting options).
+Query Parameters:
+category: Filter by app category.
+sort: Sort by popularity, rating, or date added.
+search: Search by app name or description.
+Response (200 OK):
+JSON
+[
+  {
+    "appId": 1,
+    "creatorId": 123,
+    "name": "My Awesome App",
+    "description": "This app does amazing things!",
+    "category": "Productivity",
+    "iconUrl": "https://...",
+    "isGame": false,
+    // ... other app data
+  },
+  // ... more apps
+]
+Use code with caution.
+
+/api/apps (POST)
+
+Description: Submits a new app to the marketplace.
+Authentication: Requires JWT (for app creators).
+Request Body:
+JSON
+{
+  "name": "My New App",
+  "description": "...",
+  "category": "Games",
+  "repositoryUrl": "https://github.com/user/repo",
+  // ... other app metadata
+}
+Use code with caution.
+
+Response (201 Created):
+JSON
+{
+  "message": "App submitted successfully",
+  "appId": 456
+}
+Use code with caution.
+
+Error Responses:
+400 Bad Request: Invalid request data.
+401 Unauthorized: Missing or invalid JWT.
+/api/apps/{appId} (GET)
+
+Description: Retrieves details for a specific app.
+Path Parameters:
+appId: The ID of the app to retrieve.
+Response (200 OK):
+JSON
+{
+  // ... app details
+}
+Use code with caution.
+
+Error Responses:
+404 Not Found: App not found.
+/api/apps/{appId} (PUT)
+
+Description: Updates a specific app (if allowed).
+Authentication: Requires JWT (with authorization checks).
+Path Parameters:
+appId: The ID of the app to update.
+Request Body:
+JSON
+{
+  // ... app data to update
+}
+Use code with caution.
+
+Response (200 OK):
+JSON
+{
+  "message": "App updated successfully"
+}
+Use code with caution.
+
+Error Responses:
+400 Bad Request: Invalid request data.
+401 Unauthorized: Missing or invalid JWT.
+403 Forbidden: Not authorized to update this app.
+404 Not Found: App not found.
+/api/apps/{appId} (DELETE)
+
+Description:  Deletes a specific app (if allowed).
+
+Authentication:  Requires JWT (with authorization checks).
+
+Path Parameters:
+
+appId: The ID of the app to delete.
+Response (204 No Content):
+
+Error Responses:
+
+401 Unauthorized: Missing or invalid JWT.
+403 Forbidden: Not authorized to delete this app.
+404 Not Found: App not found.
+
+# 4. Repositories
+
+*   `/api/repositories` (POST)
+    -   **Description:** Creates a new repository for the authenticated user.
+    -   **Authentication:** Requires JWT.
+    -   **Request Body:**
+        ```json
+        {
+          "name": "My Repository"
+        }
+        ```
+    -   **Response (201 Created):**
+        ```json
+        {
+          "message": "Repository created successfully",
+          "repositoryId": 123
+        }
+        ```
+    -   **Error Responses:**
+        -   `400 Bad Request`: Invalid request data (e.g., missing name).
+        -   `401 Unauthorized`: Missing or invalid JWT.
+
+*   `/api/repositories` (GET)
+    -   **Description:** Retrieves a list of the authenticated user's repositories.
+    -   **Authentication:** Requires JWT.
+    -   **Response (200 OK):**
+        ```json
+        [
+          {
+            "repositoryId": 123,
+            "userId": 456,
+            "name": "My Repository",
+            "size": 1024, // in bytes
+            "fileCount": 5,
+            "createdAt": "2024-10-27T10:00:00Z",
+            "updatedAt": "2024-10-27T11:00:00Z",
+            "status": "active"
+          },
+          // ... more repositories
+        ]
+        ```
+    -   **Error Responses:**
+        -   `401 Unauthorized`: Missing or invalid JWT.
+
+*   `/api/repositories/{repositoryId}` (GET)
+    -   **Description:** Retrieves details for a specific repository.
+    -   **Authentication:** Requires JWT (with potential authorization checks).
+    -   **Path Parameters:**
+        -   `repositoryId`: The ID of the repository to retrieve.
+    -   **Response (200 OK):**
+        ```json
+        {
+          // ... repository details
+        }
+        ```
+    -   **Error Responses:**
+        -   `401 Unauthorized`: Missing or invalid JWT.
+        -   `403 Forbidden`: Not authorized to access this repository.
+        -   `404 Not Found`: Repository not found.
+
+*   `/api/repositories/{repositoryId}/files` (POST)
+    -   **Description:** Uploads a file to the specified repository.
+    -   **Authentication:** Requires JWT (with authorization checks).
+    -   **Path Parameters:**
+        -   `repositoryId`: The ID of the repository.
+    -   **Request Body:**
+        -   Multipart form data with the file to upload.
+    -   **Response (201 Created):**
+        ```json
+        {
+          "message": "File uploaded successfully",
+          "fileId": 789
+        }
+        ```
+    -   **Error Responses:**
+        -   `400 Bad Request`: Invalid request data (e.g., missing file).
+        -   `401 Unauthorized`: Missing or invalid JWT.
+        -   `403 Forbidden`: Not authorized to upload files to this repository.
+        -   `404 Not Found`: Repository not found.
+
+*   `/api/repositories/{repositoryId}/lock` (POST)
+    -   **Description:** Locks or unlocks the specified repository.
+    -   **Authentication:** Requires JWT (with authorization checks).
+    -   **Path Parameters:**
+        -   `repositoryId`: The ID of the repository.
+    -   **Request Body:**
+        ```json
+        {
+          "action": "lock" // or "unlock"
+        }
+        ```
+    -   **Response (200 OK):**
+        ```json
+        {
+          "message": "Repository locked successfully" 
+          // or "Repository unlocked successfully"
+        }
+        ```
+    -   **Error Responses:**
+        -   `400 Bad Request`: Invalid request data (e.g., invalid action).
+        -   `401 Unauthorized`: Missing or invalid JWT.
+        -   `403 Forbidden`: Not authorized to lock/unlock this repository.
+        -   `404 Not Found`: Repository not found.
+
+
+# 5. Radtokens
+
+*   `/api/radtokens/balance` (GET)
+    -   **Description:** Retrieves the authenticated user's Rad token balance.
+    -   **Authentication:** Requires JWT.
+    -   **Response (200 OK):**
+        ```json
+        {
+          "userId": 456,
+          "radBalance": 1000.50,
+          "wradBalance": 500.25
+        }
+        ```
+    -   **Error Responses:**
+        -   `401 Unauthorized`: Missing or invalid JWT.
+
+*   `/api/radtokens/transactions` (GET)
+    -   **Description:** Retrieves the authenticated user's Rad token transaction history.
+    -   **Authentication:** Requires JWT.
+    -   **Response (200 OK):**
+        ```json
+        [
+          {
+            "transactionId": 1,
+            "userId": 456,
+            "type": "reward",
+            "amount": 10,
+            "timestamp": "2024-10-27T12:00:00Z",
+            "currency": "RAD" 
+          },
+          // ... more transactions
+        ]
+        ```
+    -   **Error Responses:**
+        -   `401 Unauthorized`: Missing or invalid JWT.
+
+*   `/api/radtokens/convert` (POST)
+    -   **Description:** Converts Rad tokens to WRAD or vice versa.
+    -   **Authentication:** Requires JWT.
+    -   **Request Body:**
+        ```json
+        {
+          "from": "RAD", // or "WRAD"
+          "to": "WRAD", // or "RAD"
+          "amount": 100
+        }
+        ```
+    -   **Response (200 OK):**
+        ```json
+        {
+          "message": "Conversion successful",
+          "radBalance": 900,
+          "wradBalance": 600
+        }
+        ```
+    -   **Error Responses:**
+        -   `400 Bad Request`: Invalid request data (e.g., insufficient balance).
+        -   `401 Unauthorized`: Missing or invalid JWT.
+
+
+# 6. Staking
+
+*   `/api/staking/stake` (POST)
+    -   **Description:** Stakes Rad tokens.
+    -   **Authentication:** Requires JWT.
+    -   **Request Body:**
+        ```json
+        {
+          "amount": 100
+        }
+        ```
+    -   **Response (200 OK):**
+        ```json
+        {
+          "message": "Tokens staked successfully",
+          "stakingId": 567
+        }
+        ```
+    -   **Error Responses:**
+        -   `400 Bad Request`: Invalid request data (e.g., insufficient balance).
+        -   `401 Unauthorized`: Missing or invalid JWT.
+
+*   `/api/staking/unstake` (POST)
+    -   **Description:** Unstakes Rad tokens.
+    -   **Authentication:** Requires JWT.
+    -   **Request Body:**
+        ```json
+        {
+          "stakingId": 567
+        }
+        ```
+    -   **Response (200 OK):**
+        ```json
+        {
+          "message": "Tokens unstaked successfully"
+        }
+        ```
+    -   **Error Responses:**
+        -   `400 Bad Request`: Invalid request data (e.g., invalid staking ID).
+        -   `401 Unauthorized`: Missing or invalid JWT.
+        -   `403 Forbidden`: Not authorized to unstake these tokens.
+
+*   `/api/staking/rewards` (GET)
+    -   **Description:** Retrieves the authenticated user's staking rewards.
+    -   **Authentication:** Requires JWT.
+    -   **Response (200 OK):**
+        ```json
+        {
+          "totalRewards": 15.25,
+          "rewards": [
+            // ... details of individual rewards
+          ]
+        }
+        ```
+    -   **Error Responses:**
+        -   `401 Unauthorized`: Missing or invalid JWT.
+
+
+# 7. Admin
+
+*   `/api/admin/users` (GET)
+    -   **Description:** Retrieves a list of all users.
+    -   **Authentication:** Requires JWT with admin role.
+    -   **Response (200 OK):**
+        ```json
+        [
+          // ... list of user objects
+        ]
+        ```
+    -   **Error Responses:**
+        -   `401 Unauthorized`: Missing or invalid JWT.
+ -   `403 Forbidden`: Not authorized (not an admin).
+
+*   `/api/admin/users/{userId}` (GET)
+    -   **Description:** Retrieves details for a specific user.
+    -   **Authentication:** Requires JWT with admin role.
+    -   **Path Parameters:**
+        -   `userId`: The ID of the user to retrieve.
+    -   **Response (200 OK):**
+        ```json
+        {
+          // ... user details
+        }
+        ```
+    -   **Error Responses:**
+        -   `401 Unauthorized`: Missing or invalid JWT.
+        -   `403 Forbidden`: Not authorized (not an admin).
+        -   `404 Not Found`: User not found.
+
+*   `/api/admin/users/{userId}` (PUT)
+    -   **Description:** Updates a specific user's information.
+    -   **Authentication:** Requires JWT with admin role.
+    -   **Path Parameters:**
+        -   `userId`: The ID of the user to update.
+    -   **Request Body:**
+        ```json
+        {
+          // ... user data to update (e.g., email, status)
+        }
+        ```
+    -   **Response (200 OK):**
+        ```json
+        {
+          "message": "User updated successfully"
+        }
+        ```
+    -   **Error Responses:**
+        -   `400 Bad Request`: Invalid request data.
+        -   `401 Unauthorized`: Missing or invalid JWT.
+        -   `403 Forbidden`: Not authorized (not an admin).
+        -   `404 Not Found`: User not found.
+
+*   `/api/admin/users/{userId}` (DELETE)
+    -   **Description:** Deletes a specific user.
+    -   **Authentication:** Requires JWT with admin role.
+    -   **Path Parameters:**
+        -   `userId`: The ID of the user to delete.
+    -   **Response (204 No Content):**
+    -   **Error Responses:**
+        -   `401 Unauthorized`: Missing or invalid JWT.
+        -   `403 Forbidden`: Not authorized (not an admin).
+        -   `404 Not Found`: User not found.
+
+*   `/api/admin/apps` (GET)
+    -   **Description:** Retrieves a list of all apps (including pending and rejected).
+    -   **Authentication:** Requires JWT with admin role.
+    -   **Response (200 OK):**
+        ```json
+        [
+          // ... list of app objects
+        ]
+        ```
+    -   **Error Responses:**
+        -   `401 Unauthorized`: Missing or invalid JWT.
+        -   `403 Forbidden`: Not authorized (not an admin).
+
+*   `/api/admin/apps/{appId}/approve` (POST)
+    -   **Description:** Approves a pending app.
+    -   **Authentication:** Requires JWT with admin role.
+    -   **Path Parameters:**
+        -   `appId`: The ID of the app to approve.
+    -   **Response (200 OK):**
+        ```json
+        {
+          "message": "App approved successfully"
+        }
+        ```
+    -   **Error Responses:**
+        -   `401 Unauthorized`: Missing or invalid JWT.
+        -   `403 Forbidden`: Not authorized (not an admin).
+        -   `404 Not Found`: App not found.
+
+*   `/api/admin/apps/{appId}/reject` (POST)
+    -   **Description:** Rejects a pending app.
+    -   **Authentication:** Requires JWT with admin role.
+    -   **Path Parameters:**
+        -   `appId`: The ID of the app to reject.
+    -   **Response (200 OK):**
+        ```json
+        {
+          "message": "App rejected successfully"
+        }
+        ```
+    -   **Error Responses:**
+        -   `401 Unauthorized`: Missing or invalid JWT.
+        -   `403 Forbidden`: Not authorized (not an admin).
+        -   `404 Not Found`: App not found.
+
+*   `/api/admin/radtokens/adjust_balance` (POST)
+    -   **Description:** Adjusts a user's Rad token balance (for admin intervention).
+    -   **Authentication:** Requires JWT with admin role.
+    -   **Request Body:**
+        ```json
+        {
+          "userId": 123,
+          "amount": 100, // Positive or negative adjustment
+          "reason": "Adjusting balance due to..." 
+        }
+        ```
+    -   **Response (200 OK):**
+        ```json
+        {
+          "message": "Balance adjusted successfully"
+        }
+        ```
+    -   **Error Responses:**
+        -   `400 Bad Request`: Invalid request data.
+        -   `401 Unauthorized`: Missing or invalid JWT.
+        -   `403 Forbidden`: Not authorized (not an admin).
+        -   `404 Not Found`: User not found.
+
+*   `/api/admin/system/stats` (GET)
+    -   **Description:** Retrieves platform statistics (e.g., number of users, apps, active deployments).
+    -   **Authentication:** Requires JWT with admin role.
+    -   **Response (200 OK):**
+        ```json
+        {
+          "totalUsers": 500,
+          "totalApps": 120,
+          "activeDeployments": 80,
+          // ... other statistics
+        }
+        ```
+    -   **Error Responses:**
+        -   `401 Unauthorized`: Missing or invalid JWT.
+        -   `403 Forbidden`: Not authorized (not an admin).

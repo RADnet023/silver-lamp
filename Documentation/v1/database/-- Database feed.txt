@@ -1,0 +1,102 @@
+-- Database: feed
+
+CREATE TABLE posts (
+    post_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE   
+ CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id)   
+ ON DELETE CASCADE
+);
+
+-- Other tables in the 'feed' database
+
+CREATE TABLE comments (
+    comment_id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP   
+ ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts(post_id)   
+ ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE likes (
+    like_id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   
+
+    FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES   
+ users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE shares (
+    share_id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    shared_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES   
+ users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE post_tags (  -- For adding tags to posts
+    tag_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE post_tag_assignments (  -- Assigns tags to posts
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES post_tags(tag_id) ON DELETE CASCADE
+);
+Use code with caution.
+
+Explanation of tables:
+
+posts:
+
+post_id: Unique identifier for each post.
+user_id: ID of the user who created the post.
+content: The content of the post (text, images, links, etc.).
+created_at: Timestamp of when the post was created.
+updated_at: Timestamp of when the post was last updated.
+comments:
+
+comment_id: Unique identifier for each comment.
+post_id: ID of the post the comment belongs to.
+user_id: ID of the user who wrote the comment.
+content: The content of the comment.
+created_at: Timestamp of when the comment was created.
+updated_at: Timestamp of when the comment was last updated.
+likes:
+
+like_id: Unique identifier for each like.
+post_id: ID of the post that was liked.
+user_id: ID of the user who liked the post.
+created_at: Timestamp of when the like was created.
+shares:
+
+share_id: Unique identifier for each share.
+post_id: ID of the post that was shared.
+user_id: ID of the user who shared the post.
+shared_at: Timestamp of when the post was shared.
+post_tags and post_tag_assignments:
+
+These tables allow you to add tags to posts, similar to the app_tags and app_tag_assignments tables in the apps database.
+Tags can be used to categorize and organize posts, making it easier for users to find relevant content.
+Key points:
+
+Relationships: Foreign keys define relationships between tables, ensuring data integrity and consistency.
+ON DELETE CASCADE: Ensures that related records are deleted when a parent record is deleted (e.g., if a post is deleted, its associated comments, likes, and shares are also deleted).
+Social interactions: The comments, likes, and shares tables enable social interactions on the platform, allowing users to engage with each other's posts.
+Tagging: The post_tags and post_tag_assignments tables allow for tagging posts to improve organization and searchability.

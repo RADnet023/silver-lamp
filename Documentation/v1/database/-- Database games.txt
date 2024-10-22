@@ -1,0 +1,114 @@
+-- Database: games
+
+CREATE TABLE games (
+    game_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    developer_id INT, -- Optional: If you want to track the developer of the game
+    genre VARCHAR(255),
+    release_date DATE,
+    icon_url VARCHAR(255),
+    -- ... other game fields ...
+    FOREIGN KEY (developer_id) REFERENCES users.clients(id) ON DELETE SET NULL -- If a developer is deleted, set the developer_id to NULL
+);
+
+-- Other tables in the 'games' database
+
+CREATE TABLE game_scores (
+    score_id INT AUTO_INCREMENT PRIMARY KEY,
+    game_id INT NOT NULL,
+    user_id INT NOT NULL,
+    score INT NOT NULL,
+    played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE achievements (
+    achievement_id INT AUTO_INCREMENT PRIMARY KEY,
+    game_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_achievements (
+    user_achievement_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    achievement_id INT NOT NULL,
+    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (achievement_id) REFERENCES achievements(achievement_id) ON DELETE CASCADE
+);
+
+CREATE TABLE game_statistics (
+    stat_id INT AUTO_INCREMENT PRIMARY KEY,
+    game_id INT NOT NULL,
+    total_plays INT DEFAULT 0,
+    average_score DECIMAL(10, 2) DEFAULT 0,
+    -- ... other game statistics ...
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+);
+
+CREATE TABLE game_assets (  -- Stores URLs or paths to game assets (images, sounds, etc.)
+    asset_id INT AUTO_INCREMENT PRIMARY KEY,
+    game_id INT NOT NULL,
+    asset_type VARCHAR(255) NOT NULL, -- E.g., 'image', 'sound', 'video'
+    asset_url VARCHAR(255) NOT NULL,
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+);
+Use code with caution.
+
+Explanation of tables:
+
+games:
+
+game_id: Unique identifier for each game.
+name: Name of the game.
+description: Description of the game.
+developer_id: (Optional) ID of the user (developer) who created the game.
+genre: Genre of the game (e.g., "puzzle," "action," "strategy").
+release_date: Release date of the game.
+icon_url: URL of the game's icon image.
+Other fields can be added as needed (e.g., rating, price, platform compatibility).
+game_scores:
+
+score_id: Unique identifier for each score entry.
+game_id: ID of the game.
+user_id: ID of the user who achieved the score.
+score: The score value.
+played_at: Timestamp of when the game was played.
+achievements:
+
+achievement_id: Unique identifier for each achievement.
+game_id: ID of the game the achievement belongs to.
+name: Name of the achievement.
+description: Description of the achievement.
+user_achievements:
+
+user_achievement_id: Unique identifier for each user achievement entry.
+user_id: ID of the user who unlocked the achievement.
+achievement_id: ID of the achievement.
+unlocked_at: Timestamp of when the achievement was unlocked.
+game_statistics:
+
+stat_id: Unique identifier for the statistics entry.
+game_id: ID of the game.
+total_plays: Total number of times the game has been played.
+average_score: Average score achieved in the game.
+Other statistics can be added (e.g., high score, number of unique players).
+game_assets:
+
+asset_id: Unique identifier for each game asset.
+game_id: ID of the game the asset belongs to.
+asset_type: Type of asset (e.g., "image," "sound," "video").
+asset_url: URL or path to the asset file.
+Key points:
+
+Relationships: Foreign keys define relationships between tables.
+ON DELETE CASCADE: Ensures that related records are deleted when a parent record is deleted.
+Optional developer tracking: The developer_id in the games table is optional, allowing you to track the creator of the game if needed.
+ON DELETE SET NULL: If a developer is deleted, the developer_id in the games table will be set to NULL instead of deleting the game record.
+Game statistics: The game_statistics table stores aggregated statistics about each game.
+Game assets: The game_assets table provides a way to manage and track game assets (images, sounds, etc.).
+

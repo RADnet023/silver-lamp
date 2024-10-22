@@ -1,0 +1,44 @@
+SQL
+-- Database: users
+-- Database: apps
+-- Database: rad_tokens
+-- Database: repositories
+-- Database: staking
+-- Database: feed (optional)
+-- Database: games (optional)
+
+
+Explanation:
+
+users database:  Stores core user information, including:
+
+clients: Basic user account details (username, password, email, etc.).
+client_details: Additional user profile information (birthdate, country, etc.).
+Other tables for login logs, authorized IP addresses, etc.
+apps database:  Stores data related to applications in the marketplace:
+
+apps: App details (name, description, category, status, etc.).
+app_ratings: User ratings and reviews for apps.
+Other tables for app categories, etc.
+rad_tokens database:  Manages Rad token transactions and balances:
+
+rad_transactions: Records all Rad token transactions (rewards, purchases, transfers, conversions).
+rad_balances: Stores the current Rad and WRAD balances for each user.
+repositories database:  Stores information about user code repositories:
+
+repositories: Repository details (name, size, file count, status, etc.).
+repository_files: Information about files within each repository.
+staking database:  Manages staking activities and validator information:
+
+staking: Records of user staking activities (amount, start time, end time, status).
+feed database (optional):  Stores data for social features like posts and comments.
+
+games database (optional):  Stores data for game-related features (game information, scores, achievements).
+
+Key points:
+
+Database separation: Data is separated into multiple databases for scalability, security, and maintainability.
+Relationships: Foreign keys are used to establish relationships between tables in different databases.
+Data types: Appropriate data types are used for each field (e.g., VARCHAR, INT, DECIMAL, ENUM, TIMESTAMP).
+Constraints: Constraints like NOT NULL, UNIQUE, and PRIMARY KEY are used to enforce data integrity.
+Default values: Default values are set for certain fields where applicable.
