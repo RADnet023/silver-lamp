@@ -1,0 +1,105 @@
+-- Database: rad_tokens
+
+CREATE TABLE rad_transactions (
+    transaction_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type ENUM('reward', 'purchase', 'transfer', 'conversion', 'staking', 'unstaking', 'fee', 'pool_deposit', 'pool_withdrawal') NOT NULL, 
+    amount DECIMAL(10, 2) NOT NULL,
+    currency ENUM('RAD', 'WRAD') NOT NULL DEFAULT 'RAD',
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    details TEXT,
+    block_id INT,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE rad_balances (
+    user_id INT PRIMARY KEY,
+    balance DECIMAL(10, 2) DEFAULT 0,
+    wrad_balance DECIMAL(10, 2) DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+-- Other tables in the 'rad_tokens' database
+
+CREATE TABLE pools (
+    pool_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    pool_type ENUM('liquidity', 'staking', 'yield_farming') NOT NULL,
+    total_staked DECIMAL(15, 2) DEFAULT 0,
+    start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP, -- For time-limited pools
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    currency ENUM('RAD', 'WRAD') NOT NULL DEFAULT 'RAD'
+);
+
+CREATE TABLE pool_participants (
+    participant_id INT AUTO_INCREMENT PRIMARY KEY,
+    pool_id INT NOT NULL,
+    user_id INT NOT NULL,
+    amount_staked DECIMAL(10, 2) NOT NULL,
+    staked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (pool_id) REFERENCES pools(pool_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE pool_rewards (
+    reward_id INT AUTO_INCREMENT PRIMARY KEY,
+    pool_id INT NOT NULL,
+    user_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    currency ENUM('RAD', 'WRAD') NOT NULL DEFAULT 'RAD',
+    rewarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (pool_id) REFERENCES pools(pool_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE wrad_parameters (  -- Stores parameters for managing WRAD (Wrapped Rad)
+    parameter_id INT AUTO_INCREMENT PRIMARY KEY,
+    peg_rate DECIMAL(10, 2) NOT NULL, -- The peg rate of WRAD to a stable asset (e.g., 1 WRAD = 1 USD)
+    reserve_amount DECIMAL(15, 2) NOT NULL, -- The amount of RAD held in reserve to back WRAD
+    -- ... other parameters for managing WRAD stability
+);
+Use code with caution.
+
+Explanation of tables:
+rad_transactions: Records all Rad token transactions (rewards, purchases, transfers, conversions).
+rad_balances: Stores the current Rad and WRAD balances for each user.
+pools:
+
+pool_id: Unique identifier for each pool.
+name: Name of the pool.
+description: Description of the pool.
+pool_type: Type of pool (e.g., "liquidity," "staking," "yield_farming").
+total_staked: Total amount of tokens staked in the pool.
+start_time: Timestamp of when the pool starts.
+end_time: Timestamp of when the pool ends (if applicable).
+status: Status of the pool ("active" or "inactive").
+currency: The type of Rad token accepted in the pool ("RAD" or "WRAD").
+pool_participants:
+
+participant_id: Unique identifier for each participant in a pool.
+pool_id: ID of the pool.
+user_id: ID of the user participating in the pool.
+amount_staked: Amount of tokens staked by the user in the pool.
+staked_at: Timestamp of when the user staked tokens.
+pool_rewards:
+
+reward_id: Unique identifier for each reward distributed from a pool.
+pool_id: ID of the pool.
+user_id: ID of the user receiving the reward.
+amount: Amount of tokens rewarded.
+currency: The type of Rad token rewarded ("RAD" or "WRAD").
+rewarded_at: Timestamp of when the reward was distributed.
+wrad_parameters:
+
+parameter_id: Unique identifier for the parameter set.
+peg_rate: The exchange rate between WRAD and the stable asset it's pegged to (e.g., 1 WRAD = 1 USD).
+reserve_amount: The amount of RAD tokens held in reserve to back the WRAD tokens.
+You can add more parameters here to manage the stability and functionality of WRAD (e.g., collateralization ratio, rebalancing thresholds).
+Key points:
+
+Relationships: Foreign keys are used to establish relationships between tables, ensuring data integrity and consistency.
+ON DELETE CASCADE: This clause ensures that related records are automatically deleted when a parent record is deleted (e.g., if a pool is deleted, its associated participants and rewards are also deleted).
+Pool types: The pool_type field in the pools table allows you to define different types of pools (liquidity, staking, yield farming).
+WRAD management: The wrad_parameters table provides a way to store and manage the parameters that control the stability of WRAD.

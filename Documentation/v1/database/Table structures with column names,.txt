@@ -1,0 +1,461 @@
+Table structures with column names, data types, and constraints.
+
+SCHEMA
+
+-- Database: users
+
+CREATE TABLE clients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE,   
+
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    phone VARCHAR(20),
+    address TEXT,
+    status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
+    email_verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP   
+
+);
+
+CREATE TABLE client_details (
+    client_id INT PRIMARY KEY,
+    birthdate DATE,
+    country VARCHAR(255),
+    city VARCHAR(255),
+    zipcode VARCHAR(20),
+    occupation VARCHAR(255),
+    interests TEXT,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE login_logs (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    logout_time TIMESTAMP NULL,
+    ip_address VARCHAR(45),
+    user_agent VARCHAR(255),
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE authorized_ips (
+    auth_ip_id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    auth_key VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_settings (
+    settings_id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    theme VARCHAR(255) DEFAULT 'light',
+    notifications JSON,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_roles (
+    role_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE user_role_assignments (
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    role_id INT NOT NULL,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES user_roles(role_id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_permissions (
+    permission_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE role_permission_assignments (
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    role_id INT NOT NULL,
+    permission_id INT NOT NULL,
+    FOREIGN KEY (role_id) REFERENCES user_roles(role_id) ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES user_permissions(permission_id) ON DELETE CASCADE
+);
+
+
+-- Database: apps
+
+CREATE TABLE apps (
+    app_id INT AUTO_INCREMENT PRIMARY KEY,
+    creator_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    category VARCHAR(255),
+    icon_url VARCHAR(255),
+    repository_url VARCHAR(255),
+    docker_image VARCHAR(255),
+    is_game BOOLEAN DEFAULT FALSE,
+    status ENUM('pending', 'approved', 'rejected', 'suspended') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (creator_id) REFERENCES users.clients(id)   
+ ON DELETE CASCADE
+);
+
+CREATE TABLE app_ratings (
+    rating_id INT AUTO_INCREMENT PRIMARY KEY,
+    app_id INT NOT NULL,
+    user_id INT NOT NULL,
+    rating INT,
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE app_categories (
+    category_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE app_category_assignments (
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    app_id INT NOT NULL,
+    category_id INT NOT NULL,
+    FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES app_categories(category_id) ON DELETE CASCADE
+);
+
+CREATE TABLE app_tags (  
+    tag_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE app_tag_assignments ( 
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    app_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES app_tags(tag_id) ON DELETE CASCADE
+);
+
+CREATE TABLE app_screenshots (
+    screenshot_id INT AUTO_INCREMENT PRIMARY KEY,
+    app_id INT NOT NULL,
+    screenshot_url VARCHAR(255) NOT NULL,
+    FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE
+);
+
+CREATE TABLE app_versions (
+    version_id INT AUTO_INCREMENT PRIMARY KEY,
+    app_id INT NOT NULL,
+    version_number VARCHAR(255) NOT NULL,
+    release_notes TEXT,
+    released_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE
+);
+
+CREATE TABLE app_dependencies (
+    dependency_id INT AUTO_INCREMENT PRIMARY KEY,
+    app_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    version VARCHAR(255),
+    FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE
+);
+
+
+-- Database: rad_tokens
+
+CREATE TABLE rad_transactions (
+    transaction_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type ENUM('reward', 'purchase', 'transfer', 'conversion', 'staking', 'unstaking', 'fee', 'pool_deposit', 'pool_withdrawal') NOT NULL, 
+    amount DECIMAL(10, 2) NOT NULL,
+    currency ENUM('RAD', 'WRAD') NOT NULL DEFAULT 'RAD',
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    details TEXT,
+    block_id INT,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE rad_balances (
+    user_id INT PRIMARY KEY,
+    balance DECIMAL(10, 2) DEFAULT 0,
+    wrad_balance DECIMAL(10, 2) DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE pools (
+    pool_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    pool_type ENUM('liquidity', 'staking', 'yield_farming') NOT NULL,
+    total_staked DECIMAL(15, 2) DEFAULT 0,
+    start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP,
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    currency ENUM('RAD', 'WRAD') NOT NULL DEFAULT 'RAD'
+);
+
+CREATE TABLE pool_participants (
+    participant_id INT AUTO_INCREMENT PRIMARY KEY,
+    pool_id INT NOT NULL,
+    user_id INT NOT NULL,
+    amount_staked DECIMAL(10, 2) NOT NULL,
+    staked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (pool_id) REFERENCES pools(pool_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE pool_rewards (
+    reward_id INT AUTO_INCREMENT PRIMARY KEY,
+    pool_id INT NOT NULL,
+    user_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    currency ENUM('RAD', 'WRAD') NOT NULL DEFAULT 'RAD',
+    rewarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (pool_id) REFERENCES pools(pool_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE wrad_parameters ( 
+    parameter_id INT AUTO_INCREMENT PRIMARY KEY,
+    peg_rate DECIMAL(10, 2) NOT NULL, 
+    reserve_amount DECIMAL(15, 2) NOT NULL, 
+    -- ... other parameters for managing WRAD stability
+);
+-- Database: repositories
+
+CREATE TABLE repositories (
+    repository_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    size DECIMAL(15, 2) DEFAULT 0,
+    file_count INT DEFAULT 0,
+    status ENUM('active', 'locked') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id)   
+ ON DELETE CASCADE
+);
+
+CREATE TABLE repository_files (
+    file_id INT AUTO_INCREMENT PRIMARY KEY,
+    repository_id INT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_type VARCHAR(255),
+    size DECIMAL(15, 2),
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (repository_id) REFERENCES repositories(repository_id) ON DELETE CASCADE
+);
+
+CREATE TABLE repository_locking_history (
+    lock_id INT AUTO_INCREMENT PRIMARY KEY,
+    repository_id INT NOT NULL,
+    locked_by INT NOT NULL,
+    locked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    unlocked_at TIMESTAMP NULL,
+    stake_amount DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (repository_id) REFERENCES repositories(repository_id) ON DELETE CASCADE,
+    FOREIGN KEY (locked_by) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE repository_access_logs (
+    access_log_id INT AUTO_INCREMENT PRIMARY KEY,
+    repository_id INT NOT NULL,
+    accessed_by INT NOT NULL,
+    accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    action ENUM('read', 'write', 'delete') NOT NULL,
+    ip_address VARCHAR(45),
+    FOREIGN KEY (repository_id) REFERENCES repositories(repository_id) ON DELETE CASCADE,
+    FOREIGN KEY (accessed_by) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE repository_collaborators (
+    collaborator_id INT AUTO_INCREMENT PRIMARY KEY,
+    repository_id INT NOT NULL,
+    user_id INT NOT NULL,
+    permission_level ENUM('read', 'write', 'admin') NOT NULL,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (repository_id) REFERENCES repositories(repository_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+
+-- Database: staking
+
+CREATE TABLE staking (
+    staking_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP,
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE validator_details (
+    validator_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNIQUE NOT NULL,
+    is_kyc_verified BOOLEAN DEFAULT FALSE,
+    validation_score INT DEFAULT 0, 
+    last_activity_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE validator_rewards (
+    reward_id INT AUTO_INCREMENT PRIMARY KEY,
+    validator_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    currency ENUM('RAD', 'WRAD') NOT NULL DEFAULT 'RAD',
+    rewarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    details TEXT,
+    FOREIGN KEY (validator_id) REFERENCES validator_details(validator_id) ON DELETE CASCADE
+);
+
+CREATE TABLE staking_history (
+    history_id INT AUTO_INCREMENT PRIMARY KEY,
+    staking_id INT NOT NULL,
+    action ENUM('stake', 'unstake') NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (staking_id) REFERENCES staking(staking_id) ON DELETE CASCADE
+);
+
+CREATE TABLE validator_tasks ( 
+    task_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    reward_amount DECIMAL(10, 2) DEFAULT 0,
+    currency ENUM('RAD', 'WRAD') NOT NULL DEFAULT 'RAD'
+);
+
+CREATE TABLE validator_task_assignments ( 
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    validator_id INT NOT NULL,
+    task_id INT NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP NULL,
+    FOREIGN KEY (validator_id) REFERENCES validator_details(validator_id) ON DELETE CASCADE,
+    FOREIGN KEY (task_id) REFERENCES validator_tasks(task_id) ON DELETE CASCADE
+);
+
+
+-- Database: feed
+
+CREATE TABLE posts (
+    post_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE   
+ CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id)   
+ ON DELETE CASCADE
+);
+
+CREATE TABLE comments (
+    comment_id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP   
+ ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts(post_id)   
+ ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE likes (
+    like_id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   
+
+    FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES   
+ users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE shares (
+    share_id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    shared_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES   
+ users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE post_tags ( 
+    tag_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE post_tag_assignments (
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES post_tags(tag_id) ON DELETE CASCADE
+);
+
+
+-- Database: games
+
+CREATE TABLE games (
+    game_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    developer_id INT,
+    genre VARCHAR(255),
+    release_date DATE,
+    icon_url VARCHAR(255),
+    FOREIGN KEY (developer_id) REFERENCES users.clients(id) ON DELETE SET NULL 
+);
+
+CREATE TABLE game_scores (
+    score_id INT AUTO_INCREMENT PRIMARY KEY,
+    game_id INT NOT NULL,
+    user_id INT NOT NULL,
+    score INT NOT NULL,
+    played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE achievements (
+    achievement_id INT AUTO_INCREMENT PRIMARY KEY,
+    game_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_achievements (
+    user_achievement_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    achievement_id INT NOT NULL,
+    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE game_statistics (
+    stat_id INT AUTO_INCREMENT PRIMARY KEY,
+    game_id INT NOT NULL,
+    total_plays INT DEFAULT 0,
+    average_score DECIMAL(10, 2) DEFAULT 0,
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+);
+
+CREATE TABLE game_assets (  
+    asset_id INT AUTO_INCREMENT PRIMARY KEY,
+    game_id INT NOT NULL,
+    asset_type VARCHAR(255) NOT NULL,
+    asset_url VARCHAR(255) NOT NULL,
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+);

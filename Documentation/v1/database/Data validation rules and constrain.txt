@@ -1,0 +1,105 @@
+Data validation rules and constraints.
+
+users database
+
+clients:
+
+username:
+NOT NULL: Username cannot be empty.
+UNIQUE: Username must be unique across all users.
+VARCHAR(255): Limits the length of the username to 255 characters.
+Validation rule: Use a regular expression to enforce allowed characters (e.g., alphanumeric, underscore, minimum length).
+password:
+NOT NULL: Password cannot be empty.
+VARCHAR(255): Limits the length of the password hash.
+Validation rule: Ensure the password meets complexity requirements (e.g., minimum length, uppercase, lowercase, numbers, special characters) before hashing.
+email:
+UNIQUE: Email must be unique if provided.
+VARCHAR(255): Limits the length of the email address.
+Validation rule: Use a regular expression or validation library to ensure a valid email format.
+status:
+ENUM('active', 'inactive', 'suspended'): Restricts the status to one of the allowed values.
+email_verified:
+BOOLEAN: Must be a boolean value (true or false).
+client_details:
+
+birthdate:
+DATE: Must be a valid date.
+Validation rule: Ensure the birthdate is not in the future.
+login_logs:
+
+login_time:
+TIMESTAMP: Must be a valid timestamp.
+authorized_ips:
+
+ip_address:
+NOT NULL: IP address cannot be empty.
+VARCHAR(45): Limits the length of the IP address string.
+Validation rule: Use a regular expression to ensure a valid IP address format.
+auth_key:
+NOT NULL: Auth key cannot be empty.
+UNIQUE: Auth key must be unique.
+VARCHAR(255): Limits the length of the auth key.
+user_settings:
+
+theme:
+VARCHAR(255): Limits the length of the theme name.
+Validation rule: Ensure the theme is one of the allowed themes (defined in the configuration).
+notifications:
+JSON: Must be a valid JSON object.
+Validation rule: Validate the structure and values of the JSON object to ensure it conforms to the expected format for notification settings.
+apps database
+
+apps:
+
+name:
+NOT NULL: App name cannot be empty.
+VARCHAR(255): Limits the length of the app name.
+category:
+VARCHAR(255): Limits the length of the category name.
+Validation rule: Ensure the category is one of the allowed categories (if using predefined categories).
+status:
+ENUM('pending', 'approved', 'rejected', 'suspended'): Restricts the status to one of the allowed values.
+app_ratings:
+
+rating:
+INT: Must be an integer.
+Validation rule: Ensure the rating is within a valid range (e.g., 1 to 5).
+app_categories:
+
+name:
+NOT NULL: Category name cannot be empty.
+UNIQUE: Category name must be unique.
+VARCHAR(255): Limits the length of the category name.
+app_tags:
+
+name:
+NOT NULL: Tag name cannot be empty.
+UNIQUE: Tag name must be unique.
+VARCHAR(255): Limits the length of the tag name.
+app_screenshots:
+
+screenshot_url:
+NOT NULL: Screenshot URL cannot be empty.
+VARCHAR(255): Limits the length of the URL.
+Validation rule: Use a regular expression or validation library to ensure a valid URL format.
+app_versions:
+
+version_number:
+NOT NULL: Version number cannot be empty.
+VARCHAR(255): Limits the length of the version number.
+Validation rule: Use a regular expression to enforce a valid version number format (e.g., semantic versioning).
+app_dependencies:
+
+name:
+NOT NULL: Dependency name cannot be empty.
+VARCHAR(255): Limits the length of the dependency name.
+(Continue with similar validation rules and constraints for the other databases: rad_tokens, repositories, staking, feed, and games)
+
+Key points:
+
+Data types: Use appropriate data types (INT, VARCHAR, DECIMAL, ENUM, BOOLEAN, DATE, TIMESTAMP, JSON) to enforce basic validation.
+Constraints: Use constraints (NOT NULL, UNIQUE, PRIMARY KEY, FOREIGN KEY, CHECK) to enforce data integrity and relationships.
+Validation rules: Implement additional validation rules in your application code (e.g., using regular expressions, validation libraries) to enforce more complex validation logic.
+Error handling: Handle validation errors gracefully and provide informative error messages to users.
+

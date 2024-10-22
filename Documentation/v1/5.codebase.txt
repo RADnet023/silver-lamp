@@ -1,0 +1,2904 @@
+// backend/src/controllers/authController.js
+
+/**
+ * @module authController
+ * @description This module handles user authentication and authorization.
+ */
+
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User'); // Assuming you're using an ORM
+
+/**
+ * @function login
+ * @description Handles user login requests.
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
+ * @param {function} next - Express next middleware function.
+ */
+exports.login = async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+
+    // Find the user in the database
+    const user = await User.findOne({   
+ where: { username } });
+    if (!user) {
+      return res.status(401).json({ message:   
+ 'Invalid credentials' });
+    }
+
+    // Compare the provided password with the stored hash
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch)   
+ {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Generate a JWT
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET_KEY,   
+ {
+      expiresIn: '1h',
+    });
+
+    // Set the JWT as an HTTP-only cookie
+    res.cookie('token', token, { httpOnly: true });
+
+    // Return a success response
+    res.json({ message: 'Login successful', token });
+  } catch (error) {
+    next(error); // Pass the error to the error handling middleware
+  }
+};
+
+/**
+ * @function register
+ * @description Handles user registration requests.
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
+ * @param {function} next - Express next middleware function.
+ */
+exports.register = async (req, res, next) => {
+  try {
+    const { username, password, email } = req.body;
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user   
+ in the database
+    const newUser = await User.create({
+      username,   
+
+      password: hashedPassword,
+      email,
+    });
+
+    // Return a success response
+    res
+      .status(201)
+      .json({ message: 'User registered successfully', userId: newUser.id });
+  } catch (error) {
+    next(error); // Pass the error to the error handling middleware
+  }
+};
+Explanation:
+
+Module-level documentation: The @module tag defines the module and provides a brief description.
+Function-level documentation: The @function, @description, @param, and other tags provide detailed information about each function.
+Code comments: Inline comments explain specific lines of code or logic.
+Design patterns: This example demonstrates the use of the Model-View-Controller (MVC) pattern, where the controller handles the request, interacts with the model (User), and returns a response.
+Coding conventions: The code follows common JavaScript coding conventions (e.g., camelCase for variable names, consistent indentation).
+Error handling: The try...catch block handles potential errors and passes them to a centralized error handling middleware.
+
+
+Frontend components:
+
+JavaScript
+// frontend/src/components/AppCard.js
+
+/**
+ * AppCard component
+ *
+ * @description Displays a card representing an app in the marketplace.
+ *
+ * @prop {number} appId - The ID of the app.
+ * @prop {string} name - The name of the app.
+ * @prop {string} description - A short description of the app.
+ * @prop {string} category - The category of the app.
+ * @prop {string} iconUrl - The URL of the app's icon.
+ * @prop {boolean} isGame - Whether the app is a game.
+ *
+ * @example
+ * <AppCard
+ *   appId={123}
+ *   name="My Awesome App"
+ *   description="This app does amazing things!"
+ *   category="Productivity"
+ *   iconUrl="https://..."
+ *   isGame={false}
+ * />
+ */
+import React from 'react';
+
+const AppCard = ({ appId, name, description, category, iconUrl, isGame }) => {
+  return (
+    <div className="app-card">
+      <img src={iconUrl} alt={`${name} icon`} />
+      <h3>{name}</h3>
+      <p>{description}</p>
+      <div className="app-details">
+        <span className="category">{category}</span>
+        {isGame && <span className="game-tag">Game</span>}
+      </div>
+      {/* ... other elements like buttons, ratings, etc. */}
+    </div>
+  );
+};
+
+export default AppCard;
+Use code with caution.
+
+Explanation:
+
+Component description: A clear description of the component's purpose.
+Props documentation: Each prop is documented with its name, type, and description.
+Example usage: An example code snippet shows how to use the component and pass props.
+State and methods: If the component has internal state or methods, they would be documented as well.
+Example with state and methods:
+
+JavaScript
+// frontend/src/components/LoginForm.js
+
+/**
+ * LoginForm component
+ *
+ * @description Handles user login form submission.
+ *
+ * @state
+ * username: string - The entered username.
+ * password: string - The entered password.
+ * error: string | null - Error message if login fails.
+ * isLoading: boolean - Indicates if the login request is in progress.
+ *
+ * @method handleSubmit - Handles the form submission.
+ */
+import React, { useState } from 'react';
+import authService from '../services/authService';
+
+const LoginForm = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error,   
+ setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null);   
+
+
+    try {
+      await authService.login({ username, password });
+      // Redirect to dashboard or perform other actions on successful login
+    } catch (error) {
+      setError(error.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* ... form inputs and buttons */}
+    </form>
+  );
+};
+
+export default LoginForm;
+Use code with caution.
+
+Tools for frontend component documentation:
+
+React Docgen: A tool that extracts information from React components (props, state, methods) to generate documentation.
+Storybook: A development environment for UI components that can also be used for documentation.
+Bit: A tool for component collaboration and documentation.
+
+
+Data models: 
+
+JavaScript
+// backend/src/models/User.js
+
+/**
+ * User Model
+ * @description Represents a user in the `users` database.
+ */
+const { DataTypes } = require('sequelize'); // Assuming you're using Sequelize ORM
+const sequelize = require('../config/database'); // Import your Sequelize instance
+
+const User = sequelize.define('User', {
+  /**
+   * @property {number} id - The unique identifier for the user.
+   * @type {number}
+   * @primaryKey
+   * @autoIncrement
+   */
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+
+  /**
+   * @property {string} username - The user's unique username.
+   * @type {string}
+   * @unique
+   * @allowNull false
+   */
+  username: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+  },
+
+  /**
+   * @property {string} password - The user's password (hashed).
+   * @type {string}
+   * @allowNull false
+   */
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+
+  /**
+   * @property {string} email - The user's email address.
+   * @type {string}
+   * @unique
+   * @allowNull true
+   */
+  email: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true,
+  },
+
+  // ... other fields like first_name, last_name, etc.
+});
+
+/**
+ * @method associate
+ * @description Defines associations with other models (if any).
+ * @param {object} models - An object containing all the defined models.
+ * @example
+ * User.associate = (models) => {
+ *   User.hasMany(models.Repository);
+ * };
+ */
+User.associate = (models) => {
+  // Define associations here (e.g., User has many Repositories)
+  User.hasMany(models.Repository, { foreignKey: 'userId' });
+};
+
+module.exports = User;
+Use code with caution.
+
+Explanation:
+
+Model description: A brief description of the model and which database it belongs to.
+Field documentation: Each field is documented with:
+@property: The name of the field.
+Type: The data type of the field (e.g., string, number, boolean).
+@primaryKey: Indicates if the field is the primary key.
+@autoIncrement: Indicates if the field is auto-incrementing.
+@unique: Indicates if the field value must be unique.
+@allowNull: Indicates if the field can be null.
+Description: A clear explanation of the field's purpose.
+Associations: The associate method defines relationships with other models (e.g., one-to-many, many-to-many).
+
+
+App model: 
+
+// backend/src/models/App.js
+
+/**
+ * App Model
+ * @description Represents an app in the `apps` database.
+ */
+const { DataTypes } = require('sequelize'); // Assuming you're using Sequelize ORM
+const sequelize = require('../config/database'); // Import your Sequelize instance
+
+const App = sequelize.define('App', {
+  /**
+   * @property {number} appId - The unique identifier for the app.
+   * @type {number}
+   * @primaryKey
+   * @autoIncrement
+   */
+  appId: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+
+  /**
+   * @property {number} creatorId - The ID of the user who created the app.
+   * @type {number}
+   * @allowNull false
+   * @references User (id)
+   */
+  creatorId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users', // Assuming your User model is defined in the 'users' table
+      key: 'id',
+    },
+  },
+
+  /**
+   * @property {string} name - The name of the app.
+   * @type {string}
+   * @allowNull false
+   */
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+
+  /**
+   * @property {string} description - A brief description of the app.
+   * @type {string}
+   * @allowNull true
+   */
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+
+  /**
+   * @property {string} category - The category the app belongs to (e.g., "Games", "Productivity").
+   * @type {string}
+   * @allowNull false
+   */
+  category: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+
+  /**
+   * @property {string} iconUrl - The URL of the app's icon image.
+   * @type {string}
+   * @allowNull true
+   */
+  iconUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+
+  /**
+   * @property {string} repositoryUrl - The URL of the app's repository (e.g., GitHub).
+   * @type {string}
+   * @allowNull true
+   */
+  repositoryUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+
+  /**
+   * @property {string} dockerImage - The name of the Docker image for the app.
+   * @type {string}
+   * @allowNull true
+   */
+  dockerImage: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+
+  /**
+   * @property {string} status - The current status of the app (e.g., "pending", "approved", "rejected").
+   * @type {string}
+   * @defaultValue 'pending'
+   */
+  status: {
+    type: DataTypes.ENUM('pending', 'approved', 'rejected', 'suspended'),
+    defaultValue: 'pending',
+  },
+
+  // ... other fields like createdAt, updatedAt, etc.
+});
+
+module.exports = App;
+Use code with caution.
+
+Explanation:
+
+Model Description: Clearly states that this model represents an app in the apps database.
+Field Documentation:
+appId: Unique identifier for the app, auto-incrementing integer, primary key.
+creatorId: ID of the user who created the app, integer, not null, references the User model (establishes a relationship between users and the apps they create).
+name: Name of the app, string, not null.
+description: Brief description of the app, text, can be null.
+category: Category of the app, string, not null.
+iconUrl: URL of the app's icon image, string, can be null.
+repositoryUrl: URL of the app's code repository, string, can be null.
+dockerImage: Name of the Docker image for the app, string, can be null.
+status: Current status of the app (e.g., "pending", "approved", "rejected"), ENUM type, defaults to "pending".
+Key points:
+
+Clear and concise documentation: Each field is documented with its purpose, data type, constraints (allowNull, unique, etc.), and any relationships with other models.
+References: The creatorId field demonstrates how to establish a relationship with another model (User) using references.
+ENUM type: The status field uses an ENUM to define the possible states of an app.
+Default values: The status field also shows how to set a default value.
+
+
+Repository model:
+
+JavaScript
+// backend/src/models/Repository.js
+
+/**
+ * Repository Model
+ * @description Represents a code repository in the `repositories` database.
+ */
+const { DataTypes } = require('sequelize'); // Assuming you're using Sequelize ORM
+const sequelize = require('../config/database'); // Import your Sequelize instance
+
+const Repository = sequelize.define('Repository', {
+  /**
+   * @property {number} repositoryId - The unique identifier for the repository.
+   * @type {number}
+   * @primaryKey
+   * @autoIncrement
+   */
+  repositoryId: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+
+  /**
+   * @property {number} userId - The ID of the user who owns the repository.
+   * @type {number}
+   * @allowNull false
+   * @references User (id)
+   */
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'User', // Assuming your User model is in the 'users' table
+      key: 'id',
+    },
+  },
+
+  /**
+   * @property {string} name - The name of the repository.
+   * @type {string}
+   * @allowNull false
+   */
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+
+  /**
+   * @property {number} size - The total size of the repository in bytes.
+   * @type {number}
+   * @defaultValue 0
+   */
+  size: {
+    type: DataTypes.DECIMAL,
+    defaultValue: 0,
+  },
+
+  /**
+   * @property {number} fileCount - The number of files in the repository.
+   * @type {number}
+   * @defaultValue 0
+   */
+  fileCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+
+  /**
+   * @property {string} status - The status of the repository (e.g., "active", "locked").
+   * @type {string}
+   * @defaultValue 'active'
+   */
+  status: {
+    type: DataTypes.ENUM('active', 'locked'),
+    defaultValue: 'active',
+  },
+
+  // ... other fields like createdAt, updatedAt, etc.
+});
+
+module.exports = Repository;
+Use code with caution.
+
+Explanation:
+
+Model Description: Clearly indicates that this model represents a code repository in the repositories database.
+Field Documentation:
+repositoryId: Unique identifier for the repository, auto-incrementing integer, primary key.
+userId: ID of the user who owns the repository, integer, not null, references the User model (establishes a relationship between users and their repositories).
+name: Name of the repository, string, not null.
+size: Total size of the repository in bytes, decimal number, defaults to 0.
+fileCount: Number of files in the repository, integer, defaults to 0.
+status: Status of the repository (e.g., "active", "locked"), ENUM type, defaults to "active".
+Key points:
+
+Relationships: The userId field demonstrates the relationship between a repository and its owner (a user).
+Data types: Appropriate data types are used for each field (e.g., DECIMAL for size).
+Default values: The size and fileCount fields have default values of 0.
+ENUM for status: The status field uses an ENUM to define the possible states of a repository.
+
+
+Transaction model: 
+
+// backend/src/models/Transaction.js
+
+/**
+ * Transaction Model
+ * @description Represents a Rad token transaction in the `rad_tokens` database.
+ */
+const { DataTypes } = require('sequelize'); // Assuming you're using Sequelize ORM
+const sequelize = require('../config/database'); // Import your Sequelize instance
+
+const Transaction = sequelize.define('Transaction', {
+  /**
+   * @property {number} transactionId - The unique identifier for the transaction.
+   * @type {number}
+   * @primaryKey
+   * @autoIncrement
+   */
+  transactionId: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+
+  /**
+   * @property {number} userId - The ID of the user involved in the transaction.
+   * @type {number}
+   * @allowNull false
+   * @references User (id)
+   */
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'User', // Assuming your User model is in the 'users' table
+      key: 'id',
+    },
+  },
+
+  /**
+   * @property {string} type - The type of transaction (e.g., "reward", "purchase", "transfer", "conversion").
+   * @type {string}
+   * @allowNull false
+   */
+  type: {
+    type: DataTypes.ENUM('reward', 'purchase', 'transfer', 'conversion'),
+    allowNull: false,
+  },
+
+  /**
+   * @property {number} amount - The amount of Rad tokens involved in the transaction.
+   * @type {number}
+   * @allowNull false
+   */
+  amount: {
+    type: DataTypes.DECIMAL,
+    allowNull: false,
+  },
+
+  /**
+   * @property {string} currency - The currency of the transaction (e.g., "RAD", "WRAD").
+   * @type {string}
+   * @allowNull false
+   * @defaultValue 'RAD'
+   */
+  currency: {
+    type: DataTypes.ENUM('RAD', 'WRAD'),
+    allowNull: false,
+    defaultValue: 'RAD',
+  },
+
+  /**
+   * @property {Date} timestamp - The date and time when the transaction occurred.
+   * @type {Date}
+   * @defaultValue sequelize.literal('CURRENT_TIMESTAMP')
+   */
+  timestamp: {
+    type: DataTypes.DATE,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+  },
+
+  /**
+   * @property {string} details - Additional details about the transaction (optional).
+   * @type {string}
+   * @allowNull true
+   */
+  details: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+
+  /**
+   * @property {number} blockId - The ID of the block this transaction belongs to.
+   * @type {number}
+   * @allowNull true 
+   */
+  blockId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+});
+
+module.exports = Transaction;
+Use code with caution.
+
+Explanation:
+
+Model Description: Specifies that this model represents a Rad token transaction in the rad_tokens database.
+Field Documentation:
+transactionId: Unique identifier for the transaction, auto-incrementing integer, primary key.
+userId: ID of the user involved in the transaction, integer, not null, references the User model.
+type: Type of transaction (e.g., "reward", "purchase", "transfer", "conversion"), ENUM type, not null.
+amount: Amount of Rad tokens involved, decimal number, not null.
+currency: The type of Rad token ("RAD" or "WRAD"), ENUM type, defaults to "RAD".
+timestamp: Date and time of the transaction, defaults to the current timestamp.
+details: Optional field for additional details about the transaction, text, can be null.
+blockId: ID of the block this transaction is part of, integer, can be null initially (until the block is created).
+Key Points:
+
+ENUM for type and currency: Uses ENUMs to define the allowed values for transaction types and currencies.
+Default values: The currency field has a default value of "RAD".
+Timestamp: Automatically records the transaction time.
+Optional details: Allows for storing additional information about the transaction if needed.
+Block ID: Connects the transaction to a specific block in the blockchain-like system.
+This well-documented Transaction model provides a clear understanding of how transaction data is organized in your SecureAuth platform. It's a valuable reference for developers working with the database, implementing transaction-related features, or building tools for blockchain analysis and monitoring.
+
+
+Benefits of documenting database models:
+
+Clear understanding: Provides a clear understanding of the data structure and relationships in your application.
+Consistency: Enforces consistency in data modeling and naming conventions.
+Maintainability: Makes it easier to maintain and update the database schema.
+Code generation: Some ORMs can use model definitions to automatically generate database migration scripts.
+
+
+
+Services:
+
+JavaScript
+// backend/src/services/emailService.js
+
+/**
+ * @module emailService
+ * @description This module provides functions for sending emails.
+ */
+
+const nodemailer = require('nodemailer');
+
+// Configure your email transporter (e.g., using SMTP)
+const transporter = nodemailer.createTransport({
+  // ... your email configuration (e.g., host, port, auth)
+});
+
+/**
+ * @function sendWelcomeEmail
+ * @description Sends a welcome email to a new user.
+ * @param {string} to - The recipient's email address.
+ * @param {string} username - The username of the new user.
+ * @returns {Promise<void>}
+ * @example
+ * emailService.sendWelcomeEmail('user@example.com', 'user123')
+ *   .then(() => console.log('Welcome email sent'))
+ *   .catch(error => console.error('Error sending email:', error));
+ */
+exports.sendWelcomeEmail = async (to, username) => {
+  const mailOptions = {
+    from: 'your_email@example.com',
+    to,
+    subject: 'Welcome to SecureAuth!',
+    text: `Hello ${username},\n\nWelcome to SecureAuth! We're excited to have you on board.\n\nStart exploring our platform and discover amazing apps.\n\nBest regards,\nThe SecureAuth Team`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('Welcome email sent successfully to', to);
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    throw error; // Re-throw the error to be handled elsewhere
+  }
+};
+
+
+/**
+ * @function sendPasswordResetEmail
+ * @description Sends a password reset email to a user.
+ * @param {string} to - The recipient's email address.
+ * @param {string} username - The username of the user.
+ * @param {string} resetToken - The unique token for resetting the password.
+ * @returns {Promise<void>}
+ * @example
+ * emailService.sendPasswordResetEmail('user@example.com', 'user123', 'some_reset_token')
+ *   .then(() => console.log('Password reset email sent'))
+ *   .catch(error => console.error('Error sending email:', error));
+ */
+exports.sendPasswordResetEmail = async (to, username, resetToken) => {
+  const resetLink = `https://your-app.com/password-reset/${resetToken}`; // Replace with your frontend password reset URL
+
+  const mailOptions = {
+    from: 'your_email@example.com',
+    to,
+    subject: 'Reset your SecureAuth password',
+    html: `
+      <p>Hello ${username},</p>
+      <p>You requested to reset your password on SecureAuth.</p>
+      <p>Click the link below to reset your password:</p>
+      <a href="${resetLink}">${resetLink}</a>
+      <p>If you did not request a password reset, please ignore this email.</p>   
+
+      <p>Best regards,<br>The SecureAuth Team</p>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('Password reset email sent successfully to', to);
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error; 
+  }
+};
+
+
+/**
+ * @function sendNotificationEmail
+ * @description Sends a notification email to a user.
+ * @param {string} to - The recipient's email address.
+ * @param {string} username - The username of the user.
+ * @param {string} notification - The notification message.
+ * @returns {Promise<void>}
+ * @example
+ * emailService.sendNotificationEmail('user@example.com', 'user123', 'Your app has been approved!')
+ *   .then(() => console.log('Notification email sent'))
+ *   .catch(error => console.error('Error sending email:', error));
+ */
+exports.sendNotificationEmail = async (to, username, notification) => {
+  const mailOptions = {
+    from: 'your_email@example.com',
+    to,
+    subject: 'SecureAuth Notification',
+    text: `Hello ${username},\n\n${notification}\n\nBest regards,\nThe SecureAuth Team`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('Notification email sent successfully to', to);
+  } catch (error) {
+    console.error('Error sending notification email:', error);
+    throw error;
+  }
+};
+
+// ... other email sending functions as needed
+
+JavaScript
+// backend/src/services/blockchainService.js
+
+/**
+ * @module blockchainService
+ * @description This module provides functions for interacting with the blockchain-like system.
+ */
+
+const crypto = require('crypto');
+const Transaction = require('../models/Transaction'); // Assuming you're using an ORM
+
+/**
+ * @function createBlock
+ * @description Creates a new block with pending transactions and adds it to the blockchain.
+ * @returns {Promise<object>} - The newly created block.
+ * @throws {Error} If an error occurs during block creation.
+ */
+exports.createBlock = async () => {
+  try {
+    // 1. Get pending transactions from the database
+    const pendingTransactions = await Transaction.findAll({
+      where: { blockId: null },
+    });
+
+    // 2. Create a new block object
+    const block = {
+      timestamp: Date.now(),
+      transactions: pendingTransactions,
+      previousBlockHash: '...', // Get the hash of the previous block
+    };
+
+    // 3. Calculate the Merkle root of the transactions
+    const merkleRoot = calculateMerkleRoot(pendingTransactions);
+    block.merkleRoot = merkleRoot;
+
+    // 4. Calculate the block hash
+    const blockHash = calculateBlockHash(block);
+    block.hash = blockHash;
+
+    // 5. Update transactions with the blockId
+    await Transaction.update(
+      { blockId: block.hash }, // Using block hash as block ID
+      { where: { transactionId: pendingTransactions.map((tx) => tx.transactionId) } }
+    );
+
+    // 6. Store the block in the database (or distributed ledger in the future)
+    // ...
+
+    return block;
+  } catch (error) {
+    console.error('Error creating block:', error);
+    throw error;
+  }
+};
+
+/**
+ * @function calculateMerkleRoot
+ * @description Calculates the Merkle root of an array of transactions.
+ * @param {array} transactions - An array of transaction objects.
+ * @returns {string} - The Merkle root hash.
+ */
+const calculateMerkleRoot = (transactions) => {
+  // ... implementation for calculating Merkle root
+};
+
+/**
+ * @function calculateBlockHash
+ * @description Calculates the hash of a block.
+ * @param {object} block - The block object.
+ * @returns {string} - The block hash.
+ */
+const calculateBlockHash = (block) => {
+  const blockString = JSON.stringify(block);
+  const hash = crypto.createHash('sha256').update(blockString).digest('hex');
+  return hash;
+};
+
+/**
+ * @function verifyBlock
+ * @description Verifies the integrity of a block by checking its hash and Merkle root.
+ * @param {object} block - The block object to verify.
+ * @returns {Promise<boolean>} - True if the block is valid, false otherwise.
+ * @throws {Error} If an error occurs during verification.
+ */
+exports.verifyBlock = async (block) => {
+  try {
+    // 1. Recalculate the block hash
+    const recalculatedHash = calculateBlockHash(block);
+
+    // 2. Compare the recalculated hash with the block's stored hash
+    if (recalculatedHash !== block.hash) {
+      console.error('Block hash mismatch');
+      return false;
+    }
+
+    // 3. Recalculate the Merkle root
+    const recalculatedMerkleRoot = calculateMerkleRoot(block.transactions);
+
+    // 4. Compare the recalculated Merkle root with the block's stored Merkle root
+    if (recalculatedMerkleRoot !== block.merkleRoot) {
+      console.error('Merkle root mismatch');
+      return false;
+    }
+
+    // 5. (Optional) Verify the previous block hash
+
+    // ...
+
+    return true;
+  } catch (error) {
+    console.error('Error verifying block:', error);
+    throw error;
+  }
+};
+
+/**
+ * @function getBlock
+ * @description Retrieves a block by its hash or block number.
+ * @param {string|number} blockIdentifier - The block hash or block number.
+ * @returns {Promise<object|null>} - The block object if found, null otherwise.
+ * @throws {Error} If an error occurs during retrieval.
+ */
+exports.getBlock = async (blockIdentifier) => {
+  try {
+    let block;
+
+    if (typeof blockIdentifier === 'string') {
+      // Retrieve block by hash
+      block = await // ... your logic to fetch block by hash from the database or distributed ledger
+    } else if (typeof blockIdentifier === 'number') {
+      // Retrieve block by number
+      block = await // ... your logic to fetch block by number from the database or distributed ledger
+    } else {
+      throw new Error('Invalid block identifier');
+    }
+
+    return block;
+  } catch (error) {
+    console.error('Error retrieving block:', error);
+    throw error;
+  }
+};
+
+// ... other blockchain-related functions as needed
+
+Explanation:
+
+emailService.js:
+
+@module and @description: Clearly define the purpose of the module.
+@function, @description, @param, @returns, @example: Provide detailed documentation for each function.
+Error handling: Includes try...catch blocks and re-throws errors for centralized handling.
+Transporter configuration: Shows how to configure the email transporter (using nodemailer in this example).
+sendPasswordResetEmail:
+
+Takes the recipient's email, username, and a unique reset token as parameters.
+Constructs a password reset link using the token.
+Sends an email with the reset link, instructing the user to click it to reset their password.
+Includes error handling and logging.
+sendNotificationEmail:
+
+Takes the recipient's email, username, and the notification message as parameters.
+Sends a general notification email to the user.
+Includes error handling and logging.
+
+blockchainService.js:
+
+createBlock: Shows the steps involved in creating a new block (fetching transactions, calculating Merkle root and block hash, storing the block).
+
+Helper functions: Documents the calculateMerkleRoot and calculateBlockHash functions.
+
+verifyBlock:Takes a block object as input.
+Recalculates the block hash and Merkle root.
+Compares the recalculated values with the stored values in the block.
+Returns true if the block is valid, false otherwise.
+Includes error handling.
+getBlock:
+
+Takes a block identifier (hash or number) as input.
+Retrieves the corresponding block from the database or distributed ledger (implementation depends on your storage mechanism).
+Returns the block object if found, null otherwise.
+Includes error handling.
+
+Key points:
+
+Clear descriptions: Each service and function has a clear description of its purpose.
+Parameters and return values: Documents the types and descriptions of parameters and return values.
+Error handling: Shows how errors are handled and potentially re-thrown.
+Code examples: Provides example usage of the functions.
+Data integrity: The verifyBlock function ensures the integrity of the blockchain by verifying the hash and Merkle root of each block.
+Block retrieval: The getBlock function provides a way to access specific blocks in the blockchain.
+Flexibility: The getBlock function can retrieve blocks by either hash or number, providing flexibility for different use cases.
+Error handling: Both functions include error handling to gracefully handle potential issues.
+HTML emails: The sendPasswordResetEmail function demonstrates how to send HTML emails using the html property in mailOptions.
+Clear subject lines: Use informative subject lines to help users identify the email's purpose.
+Personalization: Include the user's name in the email to make it more personal.
+Error handling: Consistent error handling across all email functions ensures that errors are caught and logged properly.
+
+
+Utility functions:
+// backend/src/utils/validation.js
+
+/**
+ * @module validation
+ * @description This module provides utility functions for validating data.
+ */
+
+/**
+ * @function isValidEmail
+ * @description Checks if an email address is valid.
+ * @param {string} email - The email address to validate.
+ * @returns {boolean} - True if the email is valid, false otherwise.
+ * @example
+ * const isValid = isValidEmail('user@example.com'); // Returns true
+ */
+exports.isValidEmail = (email) => {
+  // Use a regular expression or a validation library to check the email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+/**
+ * @function isStrongPassword
+ * @description Checks if a password meets certain strength criteria.
+ * @param {string} password - The password to validate.
+ * @param {object} options - (Optional) Options for password strength validation:
+ *   @param {number} minLength - Minimum password length (default: 8).
+ *   @param {boolean} requireUppercase - Whether to require at least one uppercase letter (default: true).
+ *   @param {boolean} requireLowercase - Whether to require at least one lowercase letter (default: true).
+ *   @param {boolean} requireNumber - Whether to require at least one number (default: true).
+ *   @param {boolean} requireSpecialChar - Whether to require at least one special character (default: true).
+ * @returns {boolean} - True if the password meets the criteria, false otherwise.
+ * @example
+ * const isStrong = isStrongPassword('P@ssw0rd', { minLength: 10 }); // Returns true
+ */
+exports.isStrongPassword = (password, options = {}) => {
+  const {
+    minLength = 8,
+    requireUppercase = true,
+    requireLowercase = true,
+    requireNumber = true,
+    requireSpecialChar = true,
+  } = options;
+
+  if (password.length < minLength) {
+    return false;
+  }
+
+  if (requireUppercase && !/[A-Z]/.test(password)) {
+    return false;
+  }
+
+  if (requireLowercase && !/[a-z]/.test(password)) {
+    return false;
+  }
+
+  if (requireNumber && !/\d/.test(password)) {
+    return false;
+  }
+
+  if (requireSpecialChar && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    return false;
+  }
+
+  return true;
+};
+JavaScript
+// backend/src/utils/validation.js
+
+// ... (previous code for isValidEmail and isStrongPassword)
+
+/**
+ * @function isValidUsername
+ * @description Checks if a username meets certain criteria.
+ * @param {string} username - The username to validate.
+ * @param {object} options - (Optional) Options for username validation:
+ *   @param {number} minLength - Minimum username length (default: 3).
+ *   @param {number} maxLength - Maximum username length (default: 20).
+ *   @param {string} allowedChars - Regular expression defining allowed characters (default: alphanumeric and underscore).
+ * @returns {boolean} - True if the username is valid, false otherwise.
+ * @example
+ * const isValid = isValidUsername('user123'); // Returns true
+ */
+exports.isValidUsername = (username, options = {}) => {
+  const { minLength = 3, maxLength = 20, allowedChars = /^[a-zA-Z0-9_]+$/ } = options;
+
+  if (username.length < minLength || username.length > maxLength) {
+    return false;
+  }
+
+  if (!allowedChars.test(username)) {
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * @function isValidPhoneNumber
+ * @description Checks if a phone number is valid.
+ * @param {string} phoneNumber - The phone number to validate.
+ * @param {string} countryCode - (Optional) The ISO 3166-1 alpha-2 country code (e.g., 'US', 'IN'). 
+ *                                 If provided, more specific validation can be done.
+ * @returns {boolean} - True if the phone number is valid, false otherwise.
+ * @example
+ * const isValid = isValidPhoneNumber('+15551234567', 'US'); // Returns true
+ */
+exports.isValidPhoneNumber = (phoneNumber, countryCode) => {
+  // Use a regular expression or a validation library (e.g., libphonenumber-js)
+  // to check the phone number format based on the country code
+
+  if (countryCode) {
+    // Implement more specific validation based on the country code
+    // ...
+  } else {
+    // Implement general phone number validation
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/; // Basic international phone number regex
+    return phoneRegex.test(phoneNumber);
+  }
+};
+
+/**
+ * @function isValidDate
+ * @description Checks if a date is valid.
+ * @param {string|Date} date - The date to validate. Can be a string in a recognized format or a Date object.
+ * @returns {boolean} - True if the date is valid, false otherwise.
+ * @example
+ * const isValid = isValidDate('2024-10-28'); // Returns true
+ * const isValid = isValidDate(new Date('2024-10-28')); // Returns true
+ * const isValid = isValidDate('invalid date'); // Returns false
+ */
+exports.isValidDate = (date) => {
+  try {
+    const parsedDate = new Date(date);
+    return !isNaN(parsedDate.getTime()); // Check if the date is valid
+  } catch (error) {
+    return false;
+  }
+};
+
+/**
+ * @function isValidURL
+ * @description Checks if a URL is valid.
+ * @param {string} url - The URL to validate.
+ * @returns {boolean} - True if the URL is valid, false otherwise.
+ * @example
+ * const isValid = isValidURL('https://www.example.com'); // Returns true
+ * const isValid = isValidURL('invalid url'); // Returns false
+ */
+exports.isValidURL = (url) => {
+  try {
+    new URL(url); // Try creating a URL object
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+/**
+ * @function isUniqueUsername
+ * @description Checks if a username is unique in the database.
+ * @param {string} username - The username to validate.
+ * @returns {Promise<boolean>} - True if the username is unique, false otherwise.
+ * @example
+ * isUniqueUsername('new_user')
+ *   .then(isUnique => {
+ *     if (isUnique) {
+ *       // Username is available
+ *     } else {
+ *       // Username is already taken
+ *     }
+ *   })
+ *   .catch(error => console.error('Error checking username:', error));
+ */
+exports.isUniqueUsername = async (username) => {
+  try {
+    const user = await User.findOne({ where: { username } }); // Assuming you're using an ORM
+    return !user; // Return true if no user with that username exists
+  } catch (error) {
+    console.error('Error checking username uniqueness:', error);
+    throw error; 
+  }
+};
+
+/**
+ * @function isValidAddress
+ * @description Validates an address.
+ * @param {string} address - The address to validate.
+ * @param {string} countryCode - (Optional) The ISO 3166-1 alpha-2 country code (e.g., 'US', 'IN'). 
+ * @returns {Promise<boolean>} - True if the address is valid, false otherwise.
+ * @example
+ * isValidAddress('123 Main St, Anytown, CA 91234', 'US')
+ *   .then(isValid => {
+ *     if (isValid) {
+ *       // Address is valid
+ *     } else {
+ *       // Address is invalid
+ *     }
+ *   })
+ *   .catch(error => console.error('Error validating address:', error));
+ */
+exports.isValidAddress = async (address, countryCode) => {
+  try {
+    // Use a third-party address validation service (e.g., Google Maps API)
+    // or a dedicated address validation library
+    // ... (implementation to validate the address)
+  } catch (error) {
+    console.error('Error validating address:', error);
+    throw error; 
+  }
+};
+
+// ... other validation functions as needed
+
+Explanation:
+
+isValidEmail:
+
+Checks if an email address is valid using a regular expression.
+Returns true if the email matches the valid format, false otherwise.
+
+isStrongPassword:
+
+Checks if a password meets certain strength criteria, such as minimum length, uppercase, lowercase, numbers, and special characters.
+Takes an optional options object to customize the validation rules.
+Returns true if the password meets all the criteria, false otherwise.
+
+isValidUsername:
+
+Checks if a username meets certain criteria, such as:
+Minimum and maximum length.
+Allowed characters (alphanumeric and underscore by default, but customizable with the allowedChars option).
+Returns true if the username is valid, false otherwise.
+isValidPhoneNumber:
+
+Checks if a phone number is valid.
+Takes an optional countryCode parameter to perform more specific validation based on the country.
+Uses a regular expression for general validation or a library like libphonenumber-js for more accurate and country-specific validation.
+Returns true if the phone number is valid, false otherwise.
+
+isValidDate:
+
+Checks if a date is valid by attempting to create a Date object from the input.
+Handles both string and Date object inputs.
+Returns true if the date is valid, false otherwise.
+isValidURL:
+
+Checks if a URL is valid by attempting to create a URL object from the input.
+Returns true if the URL is valid, false otherwise.
+isUniqueUsername:
+
+Checks if a username is unique in the database by querying the User model (using an ORM in this example).
+Returns a promise that resolves to true if the username is unique, false otherwise.
+isValidAddress:
+
+Validates an address using a third-party service or library.
+Takes an optional countryCode parameter to perform country-specific validation.
+Returns a promise that resolves to true if the address is valid, false otherwise.
+
+
+Key points:
+
+Clear purpose: Each function has a clear description of its purpose.
+Parameter documentation: Describes the type and purpose of each parameter.
+Return value: Specifies the type and meaning of the return value.
+Optional parameters: Shows how to handle optional parameters and provide default values.
+Code examples: Provides examples of how to use the functions.
+Customization: Both functions allow for customization through optional parameters.
+Country-specific validation: The isValidPhoneNumber function demonstrates how to handle country-specific phone number formats.
+Regular expressions: Uses regular expressions for basic validation, but you can use more sophisticated validation libraries for complex scenarios.
+Asynchronous operations: The isUniqueUsername and isValidAddress functions are asynchronous because they involve external operations (database query and address validation service).
+Error handling: Includes try...catch blocks to handle potential errors during validation.
+Third-party services: Demonstrates how to integrate with third-party services for more complex validation (address validation in this example).
+
+formatCurrency(amount, currency): 
+JavaScript
+// backend/src/utils/validation.js 
+
+// ... (previous code for other validation functions)
+
+/**
+ * @function formatCurrency
+ * @description Formats a currency amount with the specified currency symbol and formatting.
+ * @param {number} amount - The amount to format.
+ * @param {string} currency - The currency code (e.g., 'USD', 'EUR', 'JPY').
+ * @param {object} options - (Optional) Configuration options for formatting:
+ *   @param {string} locale - The locale to use for formatting (e.g., 'en-US', 'de-DE').
+ *   @param {number} minimumFractionDigits - The minimum number of fraction digits to use.
+ *   @param {number} maximumFractionDigits - The maximum number of fraction digits to use.
+ * @returns   
+ {string} - The formatted currency string.
+ * @example
+ * const formattedAmount = formatCurrency(1000, 'USD'); // Returns '$1,000.00'
+ * const formattedAmount = formatCurrency(1000, 'EUR', { locale: 'de-DE' }); // Returns '1.000,00 €'
+ */
+exports.formatCurrency = (amount, currency, options = {}) => {
+  const { locale = 'en-US', minimumFractionDigits = 2, maximumFractionDigits = 2 } = options;
+
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits,
+      maximumFractionDigits,
+    }).format(amount);
+  } catch (error) {
+    console.error('Error formatting currency:', error);
+    return amount.toString(); // Return the amount as a string in case of error
+  }
+};
+
+// ... other validation functions as needed
+Use code with caution.
+
+Explanation:
+
+formatCurrency:
+Takes the amount and currency code as required parameters.
+Uses the Intl.NumberFormat API to format the currency according to the specified locale and options.
+Handles optional parameters (locale, minimumFractionDigits, maximumFractionDigits) to customize the formatting.
+Returns the formatted currency string (e.g., '$1,000.00').
+Includes error handling and returns the amount as a string if formatting fails.
+Key points:
+
+Intl.NumberFormat: Uses the built-in Intl.NumberFormat API for accurate and locale-aware currency formatting.
+Customization: Allows customization of the locale and the number of fraction digits.
+Error handling: Includes a try...catch block to handle potential errors during formatting.
+Example usage:
+
+JavaScript
+const amount = 1234.56;
+const formattedUSD = formatCurrency(amount, 'USD'); // '$1,234.56'
+const formattedEUR = formatCurrency(amount, 'EUR', { locale: 'fr-FR' }); // '1 234,56 €'
+const formattedJPY = formatCurrency(amount, 'JPY', { minimumFractionDigits: 0 }); // '¥1,235'
+Use code with caution.
+
+This formatCurrency function provides a convenient way to format currency amounts in your application, ensuring consistent and locale-appropriate display of monetary values.
+
+generateRandomString:
+
+JavaScript
+// backend/src/utils/validation.js
+
+// ... (previous code for other validation functions)
+
+/**
+ * @function generateRandomString
+ * @description Generates a random string of a specified length.
+ * @param {number} length - The desired length of the random string.
+ * @param {string} charset - (Optional) The characters to use for generating the string (default: alphanumeric).
+ * @returns {string} - The generated random string.
+ * @example
+ * const randomString = generateRandomString(10); // e.g., 'aBcd1EfGh2'
+ * const token = generateRandomString(32, 'abcdef0123456789'); // e.g., 'a1f2b3c4d5e60789123456789abcdef'
+ */
+exports.generateRandomString = (length, charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789') => {
+  let result = '';
+  const charactersLength = charset.length;
+  for (let i = 0; i < length; i++) {
+    result += charset.charAt(Math.floor(Math.random() * charactersLength));   
+
+  }
+  return result;
+};
+
+// ... other validation functions as needed
+Use code with caution.
+
+Explanation:
+
+generateRandomString:
+Takes the desired length of the string as a required parameter.
+Takes an optional charset parameter to specify the characters to use for generating the string. The default charset is alphanumeric (A-Za-z0-9).
+Uses a for loop to generate the random string by repeatedly selecting random characters from the charset.
+Returns the generated random string.
+Key points:
+
+Flexibility: Allows customization of the character set to generate different types of random strings (e.g., alphanumeric, hexadecimal, only letters).
+Randomness: Uses Math.random() to generate random characters, ensuring a good distribution of characters in the output string.
+Efficiency: The for loop provides an efficient way to generate strings of varying lengths.
+Example usage:
+
+JavaScript
+const randomId = generateRandomString(20); // Generates a random ID with 20 alphanumeric characters
+const apiToken = generateRandomString(32, 'abcdef0123456789'); // Generates a 32-character hexadecimal token
+const password = generateRandomString(12, 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%^&*()_+'); // Generates a strong password with letters, numbers, and symbols
+Use code with caution.
+
+This generateRandomString function is a versatile utility for generating random strings, which can be used for various purposes like creating unique IDs, API tokens, password reset tokens, or nonce values for security.
+
+truncateString
+
+JavaScript
+// backend/src/utils/validation.js
+
+// ... (previous code for other validation functions)
+
+/**
+ * @function truncateString
+ * @description Truncates a string to a maximum length and adds an ellipsis (...) if it exceeds the limit.
+ * @param {string} str - The string to truncate.
+ * @param {number} maxLength - The maximum allowed length of the string.
+ * @returns {string} - The truncated string.
+ * @example
+ * const truncatedString = truncateString('This is a long string', 10); // Returns 'This is a...'
+ */
+exports.truncateString = (str, maxLength) => {
+  if (str.length <= maxLength) {
+    return str;
+  }
+  return str.slice(0, maxLength - 3) + '...';
+};
+
+// ... other validation functions as needed
+Use code with caution.
+
+Explanation:
+
+truncateString:
+Takes the input str (string) and maxLength (number) as parameters.
+Checks if the string's length is less than or equal to the maxLength. If it is, the original string is returned.
+If the string exceeds the maxLength, it uses the slice() method to extract a portion of the string from the beginning up to maxLength - 3. Then, it appends an ellipsis (...) to the end.
+Returns the truncated string.
+Key points:
+
+Ellipsis: The function adds an ellipsis (...) to indicate that the string has been truncated.
+Efficiency: Uses the slice() method for efficient string manipulation.
+Clarity: The code is concise and easy to understand.
+Example usage:
+
+JavaScript
+const longText = 'This is a very long string that needs to be truncated.';
+const truncatedText = truncateString(longText, 20); // 'This is a very long...'
+Use code with caution.
+
+This truncateString function is useful for displaying long strings in a limited space, such as in a table cell, a card title, or a notification message. It ensures that the text doesn't overflow its container while providing a visual cue that there is more 
+
+content.validateUsername(username): 
+
+JavaScript
+// backend/src/utils/validation.js
+
+// ... (previous code for other validation functions)
+
+/**
+ * @function validateUsername
+ * @description Checks if a username meets certain criteria.
+ * @param {string} username - The username to validate.
+ * @param {object} options - (Optional) Options for username validation:
+ *   @param {number} minLength - Minimum username length (default: 3).
+ *   @param {number} maxLength - Maximum username length (default: 20).
+ *   @param {string} allowedChars - Regular expression defining allowed characters (default: alphanumeric and underscore).
+ *   @param {boolean} noSpaces - Whether to disallow spaces in the username (default: true).
+ * @returns {boolean} - True if the username is valid, false otherwise.
+ * @example
+ * const isValid = validateUsername('user123'); // Returns true
+ * const isValid = validateUsername(' user', { noSpaces: false }); // Returns true
+ */
+exports.validateUsername = (username, options = {}) => {
+  const {
+    minLength = 3,
+    maxLength = 20,
+    allowedChars = /^[a-zA-Z0-9_]+$/,
+    noSpaces = true,
+  } = options;
+
+  if (username.length < minLength || username.length > maxLength) {
+    return false;
+  }
+
+  if (noSpaces && /\s/.test(username)) {
+    return false;
+  }
+
+  if (!allowedChars.test(username)) {
+    return false;
+  }
+
+  return true;
+};
+
+// ... other validation functions as needed
+Use code with caution.
+
+Explanation:
+
+validateUsername:
+Checks if a username meets the specified criteria.
+Takes an optional options object to customize the validation rules:
+minLength: Minimum length of the username (default: 3).
+maxLength: Maximum length of the username (default: 20).
+allowedChars: Regular expression defining the allowed characters (default: alphanumeric and underscore).
+noSpaces: Whether spaces are allowed in the username (default: true, meaning no spaces allowed).
+Returns true if the username is valid, false otherwise.
+Key points:
+
+Customization: Allows for flexible validation rules by using an options object.
+Regular expressions: Uses a regular expression (allowedChars) to define allowed characters in the username.
+Spaces: Provides an option (noSpaces) to control whether spaces are allowed in the username.
+Clear and concise: The code is well-organized and easy to understand.
+Example usage:
+
+JavaScript
+const isValid = validateUsername('my_username'); // Returns true
+const isValid = validateUsername('short', { minLength: 5 }); // Returns false (too short)
+const isValid = validateUsername('this_is_a_very_long_username', { maxLength: 20 }); // Returns false (too long)
+const isValid = validateUsername('user name', { noSpaces: false }); // Returns true (spaces allowed)
+const isValid = validateUsername('user@name', { allowedChars: /^[a-zA-Z0-9_@]+$/ }); // Returns true (allows @ symbol)
+Use code with caution.
+
+This validateUsername function provides a robust way to validate usernames in your application, ensuring they adhere to your specific requirements and security guidelines.
+
+
+Configuration files:
+
+JavaScript
+// backend/src/config/config.js
+
+/**
+ * @file config.js
+ * @description This file contains configuration settings for the SecureAuth platform.
+ */
+
+module.exports = {
+  /**
+   * @property {string} environment - The environment the application is running in (e.g., 'development', 'production').
+   * @default 'development'
+   */
+  environment: process.env.NODE_ENV || 'development',
+
+  /**
+   * @property {number} port - The port the server should listen on.
+   * @default 3000
+   */
+  port: process.env.PORT || 3000,
+
+  /**
+   * @property {string} apiBaseUrl - The base URL for the API.
+   * @default '/api'
+   */
+  apiBaseUrl: '/api',
+
+  /**
+   * @property {string} jwtSecretKey - The secret key for signing JWTs.
+   * @default 'your_jwt_secret_key' // Replace with a strong secret key in production
+   */
+  jwtSecretKey: process.env.JWT_SECRET_KEY || 'your_jwt_secret_key',
+
+  /**
+   * @property {object} database - Database configuration options.
+   * @property {string} database.host - The database host.
+   * @property {string} database.username - The database username.
+   * @property {string} database.password - The database password.
+   * @property {string} database.database - The name of the database.
+   * @property {number} database.pool.max - The maximum number of connections in the pool.
+   * @property {number} database.pool.min - The minimum number of connections in the pool.
+   * @property {number} database.pool.idle - The maximum time, in milliseconds, that a connection can be idle before being released.
+   */
+  database: {
+    host: process.env.DB_HOST || 'localhost',
+    username: process.env.DB_USERNAME || 'your_db_user',
+    password: process.env.DB_PASSWORD || 'your_db_password',
+    database: process.env.DB_DATABASE || 'secureauth_db',
+    pool: {
+      max: 5,
+      min: 0,
+      idle: 10000,
+    },
+  },
+
+  /**
+   * @property {object} email - Email configuration options.
+   * @property {string} email.host - The SMTP server host.
+   * @property {number} email.port - The SMTP server port.
+   * @property {boolean} email.secure - Whether to use TLS (true) or not (false).
+   * @property {object} email.auth - Authentication details for the SMTP server.
+   * @property {string} email.auth.user - The username for SMTP authentication.
+   * @property {string} email.auth.pass - The password for SMTP authentication.
+   */
+  email: {
+    host: process.env.EMAIL_HOST || 'smtp.example.com',
+    port: process.env.EMAIL_PORT || 587,
+    secure: process.env.EMAIL_SECURE || false,
+    auth: {
+      user: process.env.EMAIL_USER || 'your_email_user',
+      pass: process.env.EMAIL_PASS || 'your_email_password',
+    },
+  },
+
+  /**
+   * @property {object} blockchain - Blockchain-like system configuration options.
+   * @property {number} blockchain.blockInterval - The interval (in milliseconds) for creating new blocks.
+   * @default 60000 (1 minute)
+   */
+  blockchain: {
+    blockInterval: process.env.BLOCK_INTERVAL || 60000, // 1 minute
+  },
+
+
+/**
+ * @property {object} rateLimiting - Rate limiting configuration options.
+ * @property {number} rateLimiting.windowMs - The time window (in milliseconds) for rate limiting.
+ * @property {number} rateLimiting.max - The maximum number of requests allowed within the window.
+ * @default 100 requests per minute
+ */
+rateLimiting: {
+  windowMs: 60 * 1000, // 1 minute
+  max: 100,
+},
+
+/**
+ * @property {object} logging - Logging configuration options.
+ * @property {string} logging.level - The logging level ('error', 'warn', 'info', 'verbose', 'debug').
+ * @property {string} logging.filePath - The path to the log file.
+ * @default Logs to the console with 'info' level
+ */
+logging: {
+  level: process.env.LOG_LEVEL || 'info',
+  filePath: process.env.LOG_FILE || './secureauth.log',
+},
+
+/**
+ * @property {object} externalServices - Configuration for external services.
+ * @property {string} externalServices.paymentGateway.apiKey - The API key for the payment gateway.
+ * @property {string} externalServices.paymentGateway.apiUrl - The API URL for the payment gateway.
+ * @property {string} externalServices.addressValidator.apiKey - The API key for the address validation service.
+ * @property {string} externalServices.addressValidator.apiUrl - The API URL for the address validation service.
+ */
+externalServices: {
+  paymentGateway: {
+    apiKey: process.env.PAYMENT_GATEWAY_API_KEY || 'your_payment_gateway_api_key',
+    apiUrl: process.env.PAYMENT_GATEWAY_API_URL || 'https://api.paymentgateway.com',
+  },
+  addressValidator: {
+    apiKey: process.env.ADDRESS_VALIDATOR_API_KEY || 'your_address_validator_api_key',
+    apiUrl: process.env.ADDRESS_VALIDATOR_API_URL || 'https://api.addressvalidator.com',
+  },
+},
+
+// ... other configuration settings as needed
+
+Explanation:
+File description: A brief description of the file's purpose.
+Property documentation: Each configuration property is documented with:
+@property: The name of the property.
+Type: The data type of the property (e.g., string, number, object).
+@default: The default value of the property.
+Description: A clear explanation of the property's purpose and how it affects the application.
+
+rateLimiting:
+
+Configures rate limiting to prevent abuse and protect the server from overload.
+windowMs: The time window (in milliseconds) for rate limiting (e.g., 60000 for 1 minute).
+max: The maximum number of requests allowed within the window.
+logging:
+
+Configures logging behavior.
+level: The logging level (e.g., 'error', 'warn', 'info', 'debug').
+filePath: The path to the log file. If not provided, logs will be written to the console.
+externalServices:
+
+Stores configuration settings for external services, such as:
+Payment gateway: API key and API URL.
+Address validator: API key and API URL.
+This allows you to easily manage and update the configuration for different external services.
+
+Key points:
+
+Environment variables: The example shows how to use environment variables (process.env) to override default configuration values. This is important for separating configuration from code and managing different environments (development, production).
+Nested objects: The database and email properties demonstrate how to organize related configuration settings into nested objects.
+Sensitive data: In a real application, you would store sensitive data (like database passwords and API keys) in environment variables or a secure vault, not directly in the configuration file.
+Comments: Use comments to explain the purpose of each configuration setting and any important considerations.
+Organization: Related settings are grouped together (e.g., all rate-limiting options are in the rateLimiting object).
+Environment variables: Sensitive data like API keys should be stored in environment variables and accessed using process.env.
+Default values: Provide default values for all configuration settings.
+Comments: Use clear comments to explain the purpose of each setting.
+
+CORS (Cross-Origin Resource Sharing): 
+  CORS (Cross-Origin Resource Sharing) configuration to allow your frontend (React application) to communicate with your backend (Node.js/Express.js API) when they are hosted on different domains.
+ configure CORS in your config.js file and apply it in your Express.js server:
+
+1. config.js
+
+JavaScript
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} cors - CORS (Cross-Origin Resource Sharing) configuration options.
+ * @property {string|array} cors.origin - The origin(s) allowed to access the API.
+ *                                          Can be a string for a single origin or an array for multiple origins.
+ *                                          Set to '*' to allow all origins (use with caution in production).
+ * @property {string|array} cors.methods - The HTTP methods allowed (e.g., 'GET, POST, PUT, DELETE').
+ * @property {string|array} cors.allowedHeaders - The headers allowed in the request.
+ */
+cors: {
+  origin: 'https://your-frontend-domain.com', // Replace with your actual frontend domain
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: 'Content-Type, Authorization',
+},
+
+// ... other configuration settings
+Use code with caution.
+
+2. server.js (or your main Express.js file)
+
+JavaScript
+const express = require('express');
+const cors = require('cors'); // Import the cors middleware
+const config = require('./config/config');
+
+const app = express();
+
+// Apply CORS middleware with configuration
+app.use(cors(config.cors));
+
+// ... other middleware and routes
+Use code with caution.
+
+Explanation:
+
+config.cors:
+
+origin: Specifies the origin (domain) of your frontend application. Replace https://your-frontend-domain.com with the actual domain where your React app is hosted.
+methods: Lists the allowed HTTP methods (GET, POST, PUT, DELETE, etc.).
+allowedHeaders: Specifies the allowed headers in the request, typically Content-Type and Authorization for sending JSON data and authentication tokens.
+cors(config.cors):  This applies the cors middleware to your Express.js app, using the configuration defined in config.cors.
+
+Important Considerations:
+
+Production Environment: In a production environment, do not set origin to * (allow all origins). This is a security risk. Always specify the exact origin(s) of your frontend application(s).
+Multiple Origins: If you have multiple frontend applications on different domains that need to access your API, you can provide an array of origins:
+JavaScript
+origin: ['https://frontend1.com', 'https://frontend2.com'],
+Use code with caution.
+
+Credentials: If your frontend needs to send cookies or authentication headers with the requests, you need to set the credentials option to true in both the CORS configuration and your frontend API requests:
+JavaScript
+// In config.js
+cors: {
+  // ...
+  credentials: true,
+},
+
+// In your frontend (example using fetch)
+fetch('https://your-api.com/some-endpoint', {
+  // ...
+  credentials: 'include',
+});
+Use code with caution.
+
+By correctly configuring CORS, you ensure that your frontend and backend can communicate securely and efficiently, even when they are hosted on different domains.
+
+Session management: 
+
+JavaScript
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} session - Session management configuration options.
+ * @property {string} session.secret - The secret key used to sign the session ID cookie.
+ *                                      This should be a long, random, and unique string.
+ * @property {string} session.store - The session store to use. Can be 'memory' (default), 'redis', 'mongodb', or other supported stores.
+ * @property {object} session.cookie - Cookie options for the session ID cookie.
+ * @property {number} session.cookie.maxAge - The maximum age of the cookie in milliseconds.
+ * @property {boolean} session.cookie.httpOnly - Whether the cookie should be accessible only through HTTP(S) (not JavaScript).
+ * @property {boolean} session.cookie.secure - Whether the cookie should only be transmitted over HTTPS.
+ * @default Uses in-memory store with a secure, HTTP-only cookie that expires in 1 hour
+ */
+session: {
+  secret: process.env.SESSION_SECRET || 'your_session_secret', // Replace with a strong secret in production
+  store: process.env.SESSION_STORE || 'memory', // Use a persistent store like Redis or MongoDB in production
+  cookie: {
+    maxAge: 60 * 60 * 1000, // 1 hour
+    httpOnly: true, // Prevent client-side JavaScript access to the cookie
+    secure: true, // Only transmit cookie over HTTPS (in production)
+  },
+},
+
+/**
+ * @property {object} featureToggles - Feature toggle configuration.
+ * @property {boolean} featureToggles.newFeature - Enables or disables a new feature.
+ * @default Disables the new feature by default
+ */
+featureToggles: {
+  newFeature: process.env.ENABLE_NEW_FEATURE || false, 
+},
+
+
+/**
+ * @property {object} thirdPartyAPIs - API keys and URLs for third-party services.
+ * @property {string} thirdPartyAPIs.googleMaps.apiKey - API key for Google Maps.
+ */
+thirdPartyAPIs: {
+  googleMaps: {
+    apiKey: process.env.GOOGLE_MAPS_API_KEY || 'your_google_maps_api_key',
+  },
+  // ... other third-party APIs (e.g., social login, cloud storage)
+},
+
+// ... other configuration settings as needed
+
+Explanation:
+featureToggles:
+
+Allows you to enable or disable features without redeploying the application.
+newFeature: An example of a feature toggle. Set to true to enable the new feature, false to disable it.
+This is useful for testing new features in production or gradually rolling them out to users.
+thirdPartyAPIs:
+
+Stores API keys and URLs for third-party services.
+googleMaps.apiKey: An example of storing the API key for Google Maps.
+You can add configurations for other third-party APIs as needed (e.g., social login providers, cloud storage services, payment gateways).
+session.secret: A secret key used to sign the session ID cookie. This should be a long, random, and unique string to prevent session hijacking. Never hardcode this value in the configuration file; use environment variables or a secure vault.
+session.store:
+Specifies the session store to use.
+'memory' (default): Stores sessions in memory. This is suitable for development and testing but not for production, as sessions will be lost if the server restarts.
+'redis', 'mongodb': Uses Redis or MongoDB to store sessions persistently. This is recommended for production to ensure session data is not lost.
+You can also use other session stores supported by express-session (e.g., database-backed stores).
+session.cookie:
+maxAge: The maximum age of the cookie in milliseconds. After this time, the session will expire.
+httpOnly: Set to true to prevent client-side JavaScript from accessing the cookie. This helps protect against cross-site scripting (XSS) attacks.
+secure: Set to true (in production) to ensure the cookie is only transmitted over HTTPS, preventing interception on insecure networks.
+Example usage in Express.js:
+
+JavaScript
+const express = require('express');
+const session = require('express-session'); // Import the express-session middleware
+const config = require('./config/config');
+
+const app = express();
+
+// Configure session middleware
+app.use(
+  session({
+    secret: config.session.secret,
+    resave: false,
+    saveUninitialized: true,
+    store: // ... create and configure your session store (e.g., Redis, MongoDB)
+    cookie: config.session.cookie,
+  })
+);
+
+// ... other middleware and routes
+Use code with caution.
+
+Important considerations:
+
+Session store: Choose a persistent session store (like Redis or MongoDB) for production environments to ensure session data is not lost on server restarts.
+Cookie security: Always set httpOnly to true and secure to true (in production) to protect against cookie theft and session hijacking.
+Session expiration: Set an appropriate maxAge for the session cookie based on your application's security requirements.
+Session fixation: Implement measures to prevent session fixation attacks, where an attacker forces a user to use a known session ID.
+
+
+Caching: 
+JavaScript
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} caching - Caching configuration options.
+ * @property {number} caching.defaultDuration - The default cache duration in milliseconds.
+ * @property {object} caching.invalidation - Cache invalidation strategies for specific data.
+ * @property {string} caching.invalidation.users - Cache invalidation strategy for user data ('time-based' or 'event-based').
+ * @property {number} caching.invalidation.users.duration - Cache duration for user data in milliseconds (if time-based).
+ * @default Uses a default cache duration of 1 hour with time-based invalidation for user data
+ */
+caching: {
+  defaultDuration: 60 * 60 * 1000, // 1 hour
+
+  invalidation: {
+    users: {
+      strategy: 'time-based',
+      duration: 30 * 60 * 1000, // 30 minutes
+    },
+JavaScript
+// backend/src/config/config.js
+
+// ... (previous code for other configuration settings)
+
+caching: {
+  defaultDuration: 60 * 60 * 1000, // 1 hour
+
+  invalidation: {
+    users: {
+      strategy: 'time-based',
+      duration: 30 * 60 * 1000, // 30 minutes
+    },
+
+    /**
+     * @property {object} caching.invalidation.apps - Cache invalidation strategy for app data.
+     * @property {string} caching.invalidation.apps.strategy - 'event-based' in this case.
+     */
+    apps: {
+      strategy: 'event-based', // Invalidate when a new app is added, updated, or deleted
+    },
+
+    /**
+     * @property {object} caching.invalidation.repositories - Cache invalidation strategy for repository data.
+     * @property {string} caching.invalidation.repositories.strategy - 'time-based' in this case.
+     * @property {number} caching.invalidation.repositories.duration - Cache duration for repository data in milliseconds.
+     */
+    repositories: {
+      strategy: 'time-based',
+      duration: 15 * 60 * 1000, // 15 minutes
+    },
+
+    /**
+     * @property {object} caching.invalidation.radTokenPrices - Cache invalidation strategy for Rad token prices.
+     * @property {string} caching.invalidation.radTokenPrices.strategy - 'time-based' in this case.
+     * @property {number} caching.invalidation.radTokenPrices.duration - Cache duration for Rad token prices in milliseconds.
+     */
+    radTokenPrices: {
+      strategy: 'time-based',
+      duration: 5 * 60 * 1000, // 5 minutes (more frequent updates for price data)
+    },
+    // ... other data types
+  },
+},
+
+// ... other configuration settings
+Explanation of added invalidation strategies:
+
+caching.defaultDuration:
+
+Sets the default cache duration for data that doesn't have a specific invalidation strategy defined.
+In this example, the default duration is 1 hour.
+caching.invalidation:
+
+Defines cache invalidation strategies for specific data types.
+users:
+strategy: Specifies the invalidation strategy for user data. Can be 'time-based' or 'event-based'.
+duration: If the strategy is 'time-based', this sets the cache duration for user data (30 minutes in this example).
+
+apps:
+
+Uses an event-based invalidation strategy.
+This means the app data cache will be invalidated whenever a new app is added, an existing app is updated, or an app is deleted.
+This ensures that the app marketplace always displays the latest app information.
+repositories:
+
+Uses a time-based invalidation strategy with a duration of 15 minutes.
+Repository data might not change as frequently as user data, so a slightly longer cache duration is appropriate.
+radTokenPrices:
+
+Uses a time-based invalidation strategy with a shorter duration of 5 minutes.
+Since token prices can fluctuate frequently, more frequent cache updates are necessary to display accurate information.
+Key points:
+
+Granular control: Allows you to define different invalidation strategies for different data types.
+Flexibility: Supports both time-based and event-based invalidation.
+Performance: Caching improves application performance by reducing database queries and response times.   
+Data freshness: Cache invalidation ensures that users see up-to-date information.
+Choose appropriate strategies: Select the invalidation strategy that best suits the specific data type and its update frequency.
+Event-driven invalidation: For event-based invalidation, you'll need a mechanism to trigger cache invalidation events (e.g., message queues, webhooks).
+Balance freshness and performance: Caching improves performance, but it's important to balance it with data freshness to ensure users see up-to-date information.
+
+Cache Invalidation Strategies:
+
+Time-based invalidation:
+
+Data is cached for a specific duration (e.g., 1 hour, 30 minutes).
+After the duration expires, the cache is invalidated, and fresh data is fetched from the source.
+Suitable for data that doesn't change frequently.
+Event-based invalidation:
+
+Data is invalidated when a specific event occurs (e.g., user updates their profile, a new app is added).
+More efficient for data that changes frequently, as it ensures the cache is always up-to-date.
+Requires a mechanism to trigger invalidation events (e.g., message queues, webhooks).
+
+apps:
+
+Uses an event-based invalidation strategy.
+This means the app data cache will be invalidated whenever a new app is added, an existing app is updated, or an app is deleted.
+This ensures that the app marketplace always displays the latest app information.
+repositories:
+
+Uses a time-based invalidation strategy with a duration of 15 minutes.
+Repository data might not change as frequently as user data, so a slightly longer cache duration is appropriate.
+radTokenPrices:
+
+Uses a time-based invalidation strategy with a shorter duration of 5 minutes.
+Since token prices can fluctuate frequently, more frequent cache updates are necessary to display accurate information.
+Implementing caching:
+
+You'll need to use a caching library or framework to implement caching in your application. Popular options for Node.js include:
+
+node-cache: A simple in-memory caching module.   
+redis: A powerful in-memory data store that can be used for caching.   
+memcached: Another popular caching system.   
+Example using node-cache:
+
+JavaScript
+const NodeCache = require('node-cache');
+const config = require('./config/config');
+
+const userCache = new NodeCache({ stdTTL: config.caching.invalidation.users.duration });
+
+// Cache user data
+userCache.set(userId, userData);
+
+// Retrieve user data from cache
+const cachedUserData = userCache.get(userId);
+
+Example implementation for event-based invalidation (using Redis):
+
+JavaScript
+// In your appController.js (or wherever you handle app updates)
+
+// ... after adding, updating, or deleting an app:
+
+// Publish an event to invalidate the app cache
+redisClient.publish('appCacheInvalidation', appId); 
+
+// In your middleware or service that handles caching:
+
+// Subscribe to the invalidation event
+redisClient.on('message', (channel, message) => {
+  if (channel === 'appCacheInvalidation') {
+    const appId = message;
+    // ... invalidate the cache for the given appId
+  }
+});
+
+Feature toggles: Enable or disable specific features.
+
+JavaScript
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} featureToggles - Feature toggle configuration.
+ * @property {boolean} featureToggles.newAppSubmissions - Enables or disables new app submissions.
+ * @property {boolean} featureToggles.stakingRewards - Enables or disables staking rewards.
+ * @property {boolean} featureToggles.referralProgram - Enables or disables the referral program.
+ * @property {boolean} featureToggles.experimentalFeatureA - Enables or disables an experimental feature.
+ * @default Disables new app submissions, staking rewards, and the referral program by default. 
+ *          Enables experimentalFeatureA by default (for testing).
+ */
+featureToggles: {
+  newAppSubmissions: process.env.ENABLE_NEW_APP_SUBMISSIONS || false,
+  stakingRewards: process.env.ENABLE_STAKING_REWARDS || false,
+  referralProgram: process.env.ENABLE_REFERRAL_PROGRAM || false,
+  experimentalFeatureA: process.env.ENABLE_EXPERIMENTAL_FEATURE_A || true,
+  // ... other feature toggles
+},
+
+// ... other configuration settings
+Use code with caution.
+
+Explanation:
+
+featureToggles:
+Allows you to enable or disable features without redeploying the application.
+newAppSubmissions: Controls whether users can submit new apps to the marketplace.
+stakingRewards: Controls whether staking rewards are active.
+referralProgram: Controls whether the referral program is active.
+experimentalFeatureA: An example of a toggle for an experimental feature that might be under development or testing.
+You can add more feature toggles for any functionality you want to control dynamically.
+Key points:
+
+Dynamic control: Enables or disables features without code changes or redeployment.
+Testing: Useful for testing new features in production with a limited audience (e.g., A/B testing, canary releases).
+Gradual rollout: Allows you to gradually roll out new features to users.
+Emergency shut-off: Provides a way to quickly disable a feature if it causes problems or needs to be temporarily turned off.
+Environment variables: Use environment variables (process.env) to control feature toggles, allowing you to easily enable or disable them in different environments (development, staging, production).
+How to use feature toggles in your code:
+
+JavaScript
+// Example: Checking if new app submissions are enabled
+
+const config = require('./config/config');
+
+if (config.featureToggles.newAppSubmissions) {
+  // Allow users to submit new apps
+} else {
+  // Display a message that submissions are currently closed
+}
+Use code with caution.
+
+Best practices for feature toggles:
+
+Clear naming: Use descriptive names for feature toggles.
+Documentation: Document the purpose of each feature toggle in the configuration file.
+Temporary use: Feature toggles should ideally be temporary. Once a feature is fully rolled out or removed, the toggle should be removed from the code.
+Feature toggle management: For complex applications, consider using a dedicated feature toggle management system or service.
+
+
+Third-party API keys: API keys for other services (e.g., social media login, cloud storage).
+
+JavaScript
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} thirdPartyAPIs - API keys and URLs for third-party services.
+ * @property {object} thirdPartyAPIs.googleMaps - Configuration for Google Maps API.
+ * @property {string} thirdPartyAPIs.googleMaps.apiKey - API key for Google Maps.
+ * @property {object} thirdPartyAPIs.socialLogin - Configuration for social media login providers.
+ * @property {string} thirdPartyAPIs.socialLogin.facebook.appId - App ID for Facebook login.
+ * @property {string} thirdPartyAPIs.socialLogin.facebook.appSecret - App Secret for Facebook login.
+ * @property {string} thirdPartyAPIs.socialLogin.google.clientId - Client ID for Google login.
+ * @property {string} thirdPartyAPIs.socialLogin.google.clientSecret - Client Secret for Google login.
+ * @property {object} thirdPartyAPIs.cloudStorage - Configuration for cloud storage services.
+ * @property {string} thirdPartyAPIs.cloudStorage.aws.accessKeyId - Access Key ID for AWS S3.
+ * @property {string} thirdPartyAPIs.cloudStorage.aws.secretAccessKey - Secret Access Key for AWS S3.
+ */
+thirdPartyAPIs: {
+  googleMaps: {
+    apiKey: process.env.GOOGLE_MAPS_API_KEY || 'your_google_maps_api_key',
+  },
+  socialLogin: {
+    facebook: {
+      appId: process.env.FACEBOOK_APP_ID || 'your_facebook_app_id',
+      appSecret: process.env.FACEBOOK_APP_SECRET || 'your_facebook_app_secret',
+    },
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID || 'your_google_client_id',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'your_google_client_secret',   
+
+    },
+  },
+  cloudStorage: {
+    aws: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'your_aws_access_key_id',
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'your_aws_secret_access_key',   
+
+    },
+    // ... other cloud storage providers (e.g., Google Cloud Storage, Azure Blob Storage)
+  },
+  // ... other third-party APIs
+},
+
+// ... other configuration settings
+Use code with caution.
+
+Explanation:
+
+thirdPartyAPIs:
+Stores API keys and other credentials for third-party services.
+googleMaps: Configuration for the Google Maps API (API key).
+socialLogin: Configuration for social media login providers (Facebook App ID and App Secret, Google Client ID and Client Secret).
+cloudStorage: Configuration for cloud storage services (AWS Access Key ID and Secret Access Key).
+You can add configurations for other third-party APIs as needed (e.g., payment gateways, email providers, messaging services).
+Key points:
+
+Security: Never hardcode API keys or secrets directly in the configuration file. Always use environment variables (process.env) or a secure vault to store sensitive credentials.
+Organization: Group related API keys together for better readability and maintainability.
+Documentation: Clearly document the purpose of each API key and the service it belongs to.
+Example usage in your code:
+
+JavaScript
+const config = require('./config/config');
+
+// Access the Google Maps API key
+const googleMapsApiKey = config.thirdPartyAPIs.googleMaps.apiKey;
+
+// Access the Facebook App ID
+const facebookAppId = config.thirdPartyAPIs.socialLogin.facebook.appId;
+
+// ... use the API keys to interact with the respective services
+Use code with caution.
+
+Best practices:
+
+Secure storage: Store API keys in environment variables or a secure vault.
+Principle of least privilege: Grant only the necessary permissions to each API key.
+Rotation: Rotate API keys periodically to minimize the impact of a potential compromise.
+Monitoring: Monitor API usage to detect any suspicious activity.
+
+
+Logging: Log level, log file path, logging format.
+
+JavaScript
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} logging - Logging configuration options.
+ * @property {string} logging.level - The logging level ('error', 'warn', 'info', 'verbose', 'debug').
+ * @property {string} logging.filePath - The path to the log file.
+ * @property {string} logging.format - The format for log messages ('json', 'text').
+ * @default Logs to the console with 'info' level and text format
+ */
+logging: {
+  level: process.env.LOG_LEVEL || 'info',
+  filePath: process.env.LOG_FILE || './secureauth.log', 
+  format: process.env.LOG_FORMAT || 'text', 
+},
+
+// ... other configuration settings
+Use code with caution.
+
+Explanation:
+
+logging.level:
+
+Specifies the level of detail to log. Common levels include:
+error: Log only errors.
+warn: Log warnings and errors.
+info: Log informational messages, warnings, and errors (default).
+verbose: Log more detailed information.
+debug: Log the most detailed debugging information.
+logging.filePath:
+
+Specifies the path to the log file where logs will be written.
+If not provided or set to null, logs will be written to the console.
+logging.format:
+
+Specifies the format for log messages. Common formats include:
+json: Log messages in JSON format (useful for structured logging and analysis).
+text: Log messages in plain text format (more human-readable).
+Key points:
+
+Log levels: Choose an appropriate log level based on your needs. In production, you might use a less verbose level (like error or warn) to avoid generating too many logs.
+Log file rotation: Implement log file rotation to prevent log files from becoming too large. You can use tools like logrotate for this.
+Centralized logging: For microservices or distributed systems, consider using a centralized logging system (like ELK stack or Graylog) to aggregate and analyze logs from different sources.
+Logging libraries: Use a logging library like Winston or Pino to simplify logging and provide more advanced features (e.g., different transports, log formatting).
+Example usage with Winston:
+
+JavaScript
+const winston = require('winston');
+const config = require('./config/config');
+
+const logger = winston.createLogger({
+  level: config.logging.level,
+  format: winston.format.json(), // Or winston.format.simple() for text format
+  transports: [
+    new winston.transports.File({ filename: config.logging.filePath }),
+    new winston.transports.Console(), // Log to console as well
+  ],
+});
+
+// Log messages
+logger.error('This is an error message.');
+logger.warn('This is a warning message.');
+logger.info('This is an informational message.');   
+
+
+External services: API keys and URLs for third-party services (e.g., payment gateways, address validation services).
+
+JavaScript
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} externalServices - Configuration for external services.
+ * @property {object} externalServices.paymentGateway - Configuration for the payment gateway.
+ * @property {string} externalServices.paymentGateway.apiKey - The API key for the payment gateway.
+ * @property {string} externalServices.paymentGateway.apiUrl - The API URL for the payment gateway.
+ * @property {string} externalServices.paymentGateway.merchantId - The merchant ID for the payment gateway.
+ * @property {object} externalServices.addressValidator - Configuration for the address validation service.
+ * @property {string} externalServices.addressValidator.apiKey - The API key for the address validation service.
+ * @property {string} externalServices.addressValidator.apiUrl - The API URL for the address validation service.
+ */
+externalServices: {
+  paymentGateway: {
+    apiKey: process.env.PAYMENT_GATEWAY_API_KEY || 'your_payment_gateway_api_key',
+    apiUrl: process.env.PAYMENT_GATEWAY_API_URL || 'https://api.paymentgateway.com',
+    merchantId: process.env.PAYMENT_GATEWAY_MERCHANT_ID || 'your_merchant_id',
+  },
+  addressValidator: {
+    apiKey: process.env.ADDRESS_VALIDATOR_API_KEY || 'your_address_validator_api_key',
+    apiUrl: process.env.ADDRESS_VALIDATOR_API_URL || 'https://api.addressvalidator.com',
+  },
+   // ... (paymentGateway and addressValidator configurations)
+
+  /**
+   * @property {object} externalServices.emailProvider - Configuration for the email provider.
+   * @property {string} externalServices.emailProvider.apiKey - The API key for the email service (e.g., SendGrid, Mailgun).
+   * @property {string} externalServices.emailProvider.apiUrl - The API URL for the email service.
+   * @property {string} externalServices.emailProvider.senderEmail - The sender email address to use for emails.
+   * @property {string} externalServices.emailProvider.senderName - The sender name to use for emails.
+   */
+  emailProvider: {
+    apiKey: process.env.EMAIL_PROVIDER_API_KEY || 'your_email_provider_api_key',
+    apiUrl: process.env.EMAIL_PROVIDER_API_URL || 'https://api.emailprovider.com',
+    senderEmail: process.env.EMAIL_SENDER_EMAIL || 'no-reply@secureauth.com',
+    senderName: process.env.EMAIL_SENDER_NAME || 'SecureAuth',
+  },
+
+  /**
+   * @property {object} externalServices.smsService - Configuration for the SMS service.
+   * @property {string} externalServices.smsService.apiKey - The API key for the SMS service (e.g., Twilio, Nexmo).
+   * @property {string} externalServices.smsService.apiUrl - The API URL for the SMS service.
+   * @property {string} externalServices.smsService.senderPhoneNumber - The sender phone number to use for SMS messages.
+   */
+  smsService: {
+    apiKey: process.env.SMS_SERVICE_API_KEY || 'your_sms_service_api_key',
+    apiUrl: process.env.SMS_SERVICE_API_URL || 'https://api.smsservice.com',
+    senderPhoneNumber: process.env.SMS_SENDER_PHONE_NUMBER || '+15551234567',
+  },
+ // ... (other external service configurations)
+
+  /**
+   * @property {object} externalServices.socialLogin - Configuration for social media login providers.
+   * @property {object} externalServices.socialLogin.facebook - Configuration for Facebook Login.
+   * @property {string} externalServices.socialLogin.facebook.appId - App ID for Facebook Login.
+   * @property {string} externalServices.socialLogin.facebook.appSecret - App Secret for Facebook Login.
+   * @property {object} externalServices.socialLogin.google - Configuration for Google Login.
+   * @property {string} externalServices.socialLogin.google.clientId - Client ID for Google Login.
+   * @property {string} externalServices.socialLogin.google.clientSecret - Client Secret for Google Login.
+   * @property {object} externalServices.socialLogin.twitter - Configuration for Twitter Login.
+   * @property {string} externalServices.socialLogin.twitter.consumerKey - Consumer Key for Twitter Login.
+   * @property {string} externalServices.socialLogin.twitter.consumerSecret - Consumer Secret for Twitter Login.
+   */
+  socialLogin: {
+    facebook: {
+      appId: process.env.FACEBOOK_APP_ID || 'your_facebook_app_id',
+      appSecret: process.env.FACEBOOK_APP_SECRET || 'your_facebook_app_secret',
+    },
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID || 'your_google_client_id',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'your_google_client_secret',   
+
+    },
+    twitter: {
+      consumerKey: process.env.TWITTER_CONSUMER_KEY || 'your_twitter_consumer_key',
+      consumerSecret: process.env.TWITTER_CONSUMER_SECRET || 'your_twitter_consumer_secret',
+    },
+    // ... other social login providers (e.g., LinkedIn, GitHub)
+  },
+},
+
+// ... other configuration settings
+Use code with caution.
+
+Explanation:
+
+externalServices:
+Stores configuration settings for external services.
+paymentGateway: Configuration for the payment gateway, including:
+apiKey: The API key for authenticating with the payment gateway.
+apiUrl: The base URL for the payment gateway API.
+merchantId: The merchant ID assigned by the payment gateway.
+addressValidator: Configuration for the address validation service, including:
+apiKey: The API key for the service.
+apiUrl: The base URL for the service's API.
+
+externalServices.emailProvider:
+
+apiKey: The API key for authenticating with the email service (e.g., SendGrid, Mailgun, Mailjet).
+apiUrl: The base URL for the email service API.
+senderEmail: The "from" email address to use when sending emails.
+senderName: The "from" name to use when sending emails.
+externalServices.smsService:
+
+apiKey: The API key for authenticating with the SMS service (e.g., Twilio, Nexmo, Plivo).
+apiUrl: The base URL for the SMS service API.
+senderPhoneNumber: The phone number that SMS messages will be sent from
+
+externalServices.socialLogin:
+Stores API keys and secrets for social media login providers.
+facebook: Configuration for Facebook Login, including appId and appSecret.
+google: Configuration for Google Login, including clientId and clientSecret.
+twitter: Configuration for Twitter Login, including consumerKey and consumerSecret.
+Key points:
+
+Security: Never hardcode API keys or secrets directly in the configuration file. Always use environment variables (process.env) or a secure vault to store sensitive credentials.
+Organization: Group related settings for each external service together for better readability.
+Documentation: Clearly document the purpose of each setting and the service it belongs to.
+
+Example usage in code (using Passport.js):
+
+JavaScript
+const passport = require('passport');
+const FacebookStrategy = require('passport-facebook').Strategy;
+const config = require('./config/config');   
+
+
+passport.use(
+  new FacebookStrategy(
+    {
+      clientID: config.externalServices.socialLogin.facebook.appId,
+      clientSecret: config.externalServices.socialLogin.facebook.appSecret,
+      callbackURL: '/auth/facebook/callback', // Your callback URL
+    },
+    (accessToken, refreshToken, profile, done) => {
+      // ... find or create user in your database based on their Facebook profile
+    }
+  )
+);
+
+Feature flags: Enable or disable specific features of the application.
+
+
+JavaScript
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} featureFlags - Feature flag configuration.
+ * @property {boolean} featureFlags.twoFactorAuth - Enables or disables two-factor authentication.
+ * @property {boolean} featureFlags.emailNotifications - Enables or disables email notifications.
+ * @property {boolean} featureFlags.darkMode - Enables or disables dark mode for the user interface.
+ * @property {boolean} featureFlags.premiumFeatures - Enables or disables premium features for paid users.
+ * @property {boolean} featureFlags.maintenanceMode - Enables or disables maintenance mode for the entire application.
+ * @default Disables two-factor authentication, email notifications, and premium features by default.
+ *          Enables dark mode by default.
+ *          Disables maintenance mode by default.
+ */
+featureFlags: {
+  twoFactorAuth: process.env.ENABLE_TWO_FACTOR_AUTH || false,
+  emailNotifications: process.env.ENABLE_EMAIL_NOTIFICATIONS || false,
+  darkMode: process.env.ENABLE_DARK_MODE !== 'false', // Enabled by default unless explicitly set to false
+  premiumFeatures: process.env.ENABLE_PREMIUM_FEATURES || false,
+  maintenanceMode: process.env.ENABLE_MAINTENANCE_MODE || false,
+  /**
+   * @property {boolean} featureFlags.gamification - Enables or disables gamification features (e.g., badges, leaderboards).
+   * @property {boolean} featureFlags.socialSharing - Enables or disables social sharing features for apps.
+   * @property {boolean} featureFlags.inAppPurchases - Enables or disables in-app purchases within apps.
+   * @property {boolean} featureFlags.advancedAnalytics - Enables or disables advanced analytics dashboards for app developers.
+   * @property {boolean} featureFlags.betaTestingProgram - Enables or disables the beta testing program for new features.
+   * @default Disables gamification, social sharing, in-app purchases, and the beta testing program by default.
+   *          Enables advanced analytics by default.
+   */
+  gamification: process.env.ENABLE_GAMIFICATION || false,
+  socialSharing: process.env.ENABLE_SOCIAL_SHARING || false,
+  inAppPurchases: process.env.ENABLE_IN_APP_PURCHASES || false,
+  advancedAnalytics: process.env.ENABLE_ADVANCED_ANALYTICS !== 'false', // Enabled by default
+  betaTestingProgram: process.env.ENABLE_BETA_TESTING_PROGRAM || false,
+
+// ... other feature flags
+},
+
+// ... other configuration settings
+
+Explanation:
+
+featureFlags:
+Allows you to enable or disable features without redeploying the application.
+twoFactorAuth: Controls whether two-factor authentication is enabled for user logins.
+emailNotifications: Controls whether users receive email notifications.
+darkMode: Controls whether the user interface has a dark mode option.
+premiumFeatures: Controls access to premium features for users who have a paid subscription.
+maintenanceMode: Controls whether the entire application is in maintenance mode (e.g., for scheduled downtime or updates).
+gamification: Controls whether gamification features (e.g., badges, leaderboards, achievements) are enabled on the platform.
+socialSharing: Controls whether users can share apps on social media platforms.
+inAppPurchases: Controls whether developers can implement in-app purchases within their apps.
+advancedAnalytics: Controls whether app developers have access to advanced analytics dashboards to track app usage and performance data.
+betaTestingProgram: Controls whether a beta testing program is active, allowing certain users to try out new features before they are released to everyone.
+
+Key points:
+
+Dynamic control: Enables or disables features without code changes or redeployment.
+Testing: Useful for testing new features in production with a limited audience (e.g., A/B testing, canary releases).
+Gradual rollout: Allows you to gradually roll out new features to users.
+Emergency shut-off: Provides a way to quickly disable a feature if it causes problems or needs to be temporarily turned off.
+Environment variables: Use environment variables (process.env) to control feature flags, allowing you to easily enable or disable them in different environments (development, staging, production).
+
+Example usage in code:
+
+JavaScript
+const config = require('./config/config');
+
+// Check if gamification is enabled
+if (config.featureFlags.gamification) {
+  // Display badges and leaderboards to users
+}
+
+// Check if in-app purchases are enabled
+if (config.featureFlags.inAppPurchases) {
+  // Show in-app purchase options within the app
+}
+
+Maintenance mode: Enable a maintenance mode to temporarily disable the application or certain features.
+
+JavaScript
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} maintenanceMode - Maintenance mode configuration.
+ * @property {boolean} maintenanceMode.enabled - Enables or disables maintenance mode for the entire application.
+ * @property {string} maintenanceMode.message - The message to display to users when maintenance mode is enabled.
+ * @property {array} maintenanceMode.excludedPaths - An array of API paths that should be excluded from maintenance mode (e.g., health check endpoint).
+ * @default Disables maintenance mode by default
+ */
+maintenanceMode: {
+  enabled: process.env.ENABLE_MAINTENANCE_MODE || false,
+  message: 'The platform is currently undergoing maintenance. Please check back later.',
+  excludedPaths: ['/api/health'], // Example: Exclude the health check endpoint
+},
+
+// ... other configuration settings
+Use code with caution.
+
+Explanation:
+
+maintenanceMode.enabled:
+
+Controls whether the entire application is in maintenance mode.
+Set to true to enable maintenance mode, false to disable it (default).
+maintenanceMode.message:
+
+The message to display to users when maintenance mode is enabled.
+This message can inform users about the reason for the maintenance and when they can expect the application to be back online.
+maintenanceMode.excludedPaths:
+
+An array of API paths that should be excluded from maintenance mode.
+This is useful for keeping certain endpoints accessible, such as a health check endpoint that monitoring systems might use to check the server's status.
+Implementing maintenance mode:
+
+You can implement maintenance mode using middleware in your Express.js application:
+
+JavaScript
+// backend/src/middleware/maintenanceMiddleware.js
+
+const config = require('../config/config');
+
+const maintenanceMiddleware = (req, res, next) => {
+  if (config.maintenanceMode.enabled && !config.maintenanceMode.excludedPaths.includes(req.path)) {
+    return res.status(503).json({ message: config.maintenanceMode.message });
+  }
+  next();
+};
+
+module.exports = maintenanceMiddleware;
+Use code with caution.
+
+Then, apply this middleware in your server.js:
+
+JavaScript
+// backend/server.js
+
+// ... other imports
+const maintenanceMiddleware = require('./src/middleware/maintenanceMiddleware');
+
+// ... other middleware
+
+app.use(maintenanceMiddleware); // Apply maintenance mode middleware
+
+// ... API routes
+Use code with caution.
+
+Key points:
+
+Temporary downtime: Maintenance mode allows you to take the application offline temporarily for updates, backups, or other maintenance tasks.
+Informative message: Provide a clear message to users explaining the reason for the downtime and when they can expect the application to be back online.
+Exclude essential endpoints: Exclude health check or monitoring endpoints from maintenance mode to allow external systems to check the server's status.
+Easy activation: Use an environment variable (ENABLE_MAINTENANCE_MODE) to easily activate or deactivate maintenance mode without redeploying the application.
+By implementing maintenance mode, you can perform necessary maintenance tasks without disrupting the user experience and provide clear communication to users about the downtime.
+
+
+Performance monitoring: Configuration for performance monitoring tools (e.g., APM agents).
+
+JavaScript
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} performanceMonitoring - Configuration for performance monitoring tools.
+ * @property {boolean} performanceMonitoring.enabled - Enables or disables performance monitoring.
+ * @property {string} performanceMonitoring.agent - The APM agent to use (e.g., 'newrelic', 'datadog', 'appdynamics').
+ * @property {object} performanceMonitoring.newrelic - Configuration for New Relic APM.
+ * @property {string} performanceMonitoring.newrelic.appName - The application name to use in New Relic.
+ * @property {string} performanceMonitoring.newrelic.licenseKey - The license key for New Relic.
+ * @property {object} performanceMonitoring.datadog - Configuration for Datadog APM.
+ * @property {string} performanceMonitoring.datadog.apiKey - The API key for Datadog.
+ * @property {string} performanceMonitoring.datadog.serviceName - The service name to use in Datadog.
+ * @default Disables performance monitoring by default
+ */
+performanceMonitoring: {
+  enabled: process.env.ENABLE_PERFORMANCE_MONITORING || false,
+  agent: process.env.APM_AGENT || 'newrelic', // Choose your APM agent
+
+  newrelic: {
+    appName: process.env.NEW_RELIC_APP_NAME || 'SecureAuth Platform',
+    licenseKey: process.env.NEW_RELIC_LICENSE_KEY || 'your_new_relic_license_key',
+  },
+
+  datadog: {
+    apiKey: process.env.DATADOG_API_KEY || 'your_datadog_api_key',
+    serviceName: process.env.DATADOG_SERVICE_NAME || 'secureauth-api',
+  },
+
+  // ... configuration for other APM agents (e.g., AppDynamics)
+},
+
+// ... other configuration settings
+Use code with caution.
+
+Explanation:
+
+performanceMonitoring.enabled: Enables or disables performance monitoring.
+performanceMonitoring.agent: Specifies the APM (Application Performance Monitoring) agent to use (e.g., 'newrelic', 'datadog', 'appdynamics').
+Agent-specific configuration:
+newrelic: Configuration for New Relic APM, including appName and licenseKey.
+datadog: Configuration for Datadog APM, including apiKey and serviceName.
+You can add configuration blocks for other APM agents as needed.
+Key points:
+
+Monitoring tools: APM tools provide insights into your application's performance, helping you identify bottlenecks, optimize code, and improve user experience.
+Agent selection: Choose an APM agent that best suits your needs and budget. Popular options include New Relic, Datadog, AppDynamics, and Dynatrace.
+Configuration: Provide the necessary configuration for the chosen APM agent, such as API keys, application names, and service names.
+Environment variables: Store sensitive credentials (like API keys) in environment variables.
+Integration: Integrate the APM agent into your application code according to the agent's documentation.
+Example integration with New Relic:
+
+JavaScript
+// backend/server.js
+
+const newrelic = require('newrelic'); // Require the New Relic agent
+const config = require('./src/config/config');
+
+if (config.performanceMonitoring.enabled && config.performanceMonitoring.agent === 'newrelic') {
+  // Initialize the New Relic agent with configuration
+  newrelic.initialize({
+    app_name: config.performanceMonitoring.newrelic.appName,
+    license_key: config.performanceMonitoring.newrelic.licenseKey,
+  });
+}
+
+// ... other server setup and middleware
+Use code with caution.
+
+Benefits of performance monitoring:
+
+Identify performance bottlenecks: Pinpoint slow database queries, inefficient code, or external service issues.
+Optimize application performance: Improve response times, reduce resource usage, and enhance user experience.
+Monitor application health: Track error rates, uptime, and other key metrics.
+Troubleshooting: Diagnose and resolve performance issues quickly.
+
+
+Security settings: Security-related settings like password complexity rules, session timeout, or allowed IP addresses.
+
+JavaScript
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} security - Security-related configuration settings.
+ * @property {object} security.password - Password complexity rules.
+ * @property {number} security.password.minLength - Minimum password length.
+ * @property {boolean} security.password.requireUppercase - Whether to require at least one uppercase letter.
+ * @property {boolean} security.password.requireLowercase - Whether to require at least one lowercase letter.
+ * @property {boolean} security.password.requireNumber - Whether to require at least one number.
+ * @property {boolean} security.password.requireSpecialChar - Whether to require at least one special character.
+ * @property {number} security.sessionTimeout - Session timeout in milliseconds.
+ * @property {array} security.allowedIPAddresses - An array of allowed IP addresses (or CIDR ranges) that can access the API.
+ * @default Enforces password complexity rules (min 8 characters, uppercase, lowercase, number, and special character),
+ *          sets session timeout to 1 hour, and allows all IP addresses by default.
+ */
+security: {
+  password: {
+    minLength: 8,
+    requireUppercase: true,
+    requireLowercase: true,
+    requireNumber: true,
+    requireSpecialChar: true,
+  },
+  sessionTimeout: 60 * 60 * 1000, // 1 hour
+  allowedIPAddresses: ['*'], // Allow all IP addresses (use with caution in production)
+},
+
+// ... other configuration settings
+Use code with caution.
+
+Explanation:
+
+security.password:
+
+Defines password complexity rules to enforce strong passwords.
+minLength: Minimum password length (8 characters in this example).
+requireUppercase, requireLowercase, requireNumber, requireSpecialChar: Boolean values to enforce the presence of uppercase letters, lowercase letters, numbers, and special characters in passwords.
+security.sessionTimeout:
+
+Specifies the session timeout in milliseconds. After this period of inactivity, the user's session will expire (1 hour in this example).
+security.allowedIPAddresses:
+
+An array of IP addresses or CIDR ranges that are allowed to access the API.
+['*'] allows all IP addresses (use with caution in production, as it allows access from anywhere).
+In production, you might want to restrict access to specific IP addresses or ranges (e.g., your office network, a trusted cloud provider).
+Key points:
+
+Password security: Enforcing strong password complexity rules is crucial for protecting user accounts.
+Session timeout: A reasonable session timeout helps prevent unauthorized access if a user forgets to log out.
+IP address restrictions: Restricting access to specific IP addresses can add an extra layer of security, especially in production environments.
+Security best practices: Follow security best practices for password storage (hashing with bcrypt), input validation, and protection against common web vulnerabilities (SQL injection, XSS, CSRF).
+Example usage in your code:
+
+JavaScript
+const config = require('./config/config');
+
+// Validate password complexity during user registration
+if (!validatePassword(password, config.security.password)) {
+  throw new Error('Password does not meet complexity requirements.');
+}
+
+// Configure session timeout in Express.js
+app.use(
+  session({
+    // ... other session options
+    cookie: {
+      // ... other cookie options
+      maxAge: config.security.sessionTimeout,
+    },
+  })
+);
+
+// Implement IP address whitelisting middleware
+const ipWhitelistMiddleware = (req, res, next) => {
+  const clientIP = req.ip;
+  if (!config.security.allowedIPAddresses.includes(clientIP)) {
+    return res.status(403).json({ message: 'Access denied from this IP address.' });
+  }
+  next();
+};
+
+Internationalization: Default language, supported locales.
+
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} internationalization - Internationalization (i18n) configuration options.
+ * @property {string} internationalization.defaultLanguage - The default language for the application (e.g., 'en').
+ * @property {array} internationalization.supportedLocales - An array of supported locales (e.g., ['en-US', 'es-ES', 'fr-FR']).
+ * @default Uses English ('en') as the default language and supports English (US) and Spanish (Spain) locales
+ */
+internationalization: {
+  defaultLanguage: process.env.DEFAULT_LANGUAGE || 'en',
+  supportedLocales: process.env.SUPPORTED_LOCALES ? process.env.SUPPORTED_LOCALES.split(',') : ['en-US', 'es-ES'],
+},
+
+// ... other configuration settings
+
+
+Customization: Settings to allow users to customize their experience (e.g., themes, notification preferences).
+
+JavaScript
+// backend/src/config/config.js
+
+// ... other configuration settings
+
+/**
+ * @property {object} customization - Customization options for users.
+ * @property {array} customization.themes - Available themes for the user interface (e.g., 'light', 'dark', 'blue').
+ * @property {object} customization.notifications - Notification preferences.
+ * @property {boolean} customization.notifications.email - Whether to enable email notifications.
+ * @property {boolean} customization.notifications.push - Whether to enable push notifications (if supported).
+ * @property {array} customization.notifications.types - Types of notifications to receive (e.g., 'new_message', 'app_update', 'transaction_alert').
+ * @default Provides light and dark themes, enables email notifications for new messages and app updates, and disables push notifications by default
+ */
+customization: {
+  themes: ['light', 'dark', 'blue'],
+
+  notifications: {
+    email: true,
+    push: false, // Might require additional setup and configuration
+    types: ['new_message', 'app_update'],
+  },
+
+  // ... other customization options (e.g., language, currency, date format)
+},
+
+// ... other configuration settings
+Use code with caution.
+
+Explanation:
+
+customization.themes:
+
+An array of available themes for the user interface.
+Users can choose their preferred theme from this list.
+You can add more themes as needed (e.g., 'green', 'high_contrast').
+customization.notifications:
+
+Allows users to customize their notification preferences.
+email: Whether to receive email notifications.
+push: Whether to receive push notifications (if your platform supports it).
+types: An array of notification types the user wants to receive (e.g., new_message, app_update, transaction_alert, follower_notification).
+Key points:
+
+User preferences: Store user customization preferences in the database (e.g., in the users database or a separate user_settings table).
+Default settings: Provide reasonable default settings in the configuration file.
+User interface: Create a user interface (e.g., in the user's profile settings) to allow users to change their customization options.
+Dynamic updates: Apply customization changes dynamically without requiring the user to reload the application.
+Accessibility: Consider accessibility when implementing themes (e.g., provide sufficient color contrast).
+Example usage in your code:
+
+JavaScript
+const config = require('./config/config');
+const userSettings = getUserSettings(userId); // Fetch user's customization preferences from the database
+
+// Apply the user's preferred theme
+const theme = userSettings.theme || config.customization.themes[0]; // Use default theme if no preference is set
+applyTheme(theme);
+
+// Send email notification if enabled for the specific type
+if (config.customization.notifications.email && config.customization.notifications.types.includes('app_update')) {
+  sendEmailNotification(user.email, 'Your app has been updated!');
+}
+
+
+Tools for codebase documentation:
+
+documentation generators is essential for maintaining clear, consistent, and up-to-date documentation for your codebase. Here's a breakdown of the tools you mentioned:
+
+1. JSDoc
+
+Purpose:  A popular tool for generating documentation from JavaScript code comments.
+
+Features:
+
+Parses special comment blocks (/** ... */) in your JavaScript code to extract information about functions, classes, modules, and variables.
+Supports various tags (@param, @returns, @example, etc.) to describe code elements.
+Generates HTML documentation websites from your code comments.
+Highly configurable and extensible with plugins.
+Example:
+
+JavaScript
+/**
+ * @function add
+ * @description Adds two numbers together.
+ * @param {number} a - The first number.
+ * @param {number} b - The second number.
+ * @returns {number} The sum of the two numbers.
+ */
+function add(a, b) {
+  return a + b;
+}
+Use code with caution.
+
+Usage: You can use the jsdoc command-line tool to generate documentation:
+Bash
+jsdoc my-code-file.js
+Use code with caution.
+
+2. ESDoc
+
+Purpose:  Another documentation generator that supports ES2015+ (modern JavaScript) features.
+
+Features:
+
+Similar to JSDoc, but with enhanced support for newer JavaScript syntax.
+Generates clean and modern HTML documentation websites.
+Provides features like code coverage reporting and integration with testing frameworks.
+Example:
+
+JavaScript
+class MyClass {
+  /**
+   * @param {string} name - The name of the instance.
+   */
+  constructor(name) {
+    this.name = name;
+  }
+
+  /**
+   * @returns {string} The name of the instance.
+   */
+  getName() {
+    return this.name;
+  }
+}
+Use code with caution.
+
+Usage: Use the esdoc command-line tool:
+Bash
+esdoc
+Use code with caution.
+
+3. TypeDoc
+
+Purpose:  Specifically designed for documenting TypeScript code.
+
+Features:
+
+Understands TypeScript types, interfaces, and generics.
+Generates documentation that includes type information.
+Integrates well with TypeScript projects.
+Example:
+
+TypeScript
+/**
+ * @param {string} name - The name of the user.
+ * @param {number} age - The age of the user.
+ */
+interface User {
+  name: string;
+  age: number;
+}
+Use code with caution.
+
+Usage: Use the typedoc command-line tool:
+Bash
+typedoc
+Use code with caution.
+
+Key benefits of using documentation generators:
+
+Automated documentation: Generates documentation directly from your code comments, reducing manual effort.
+Consistency: Enforces consistent documentation style and format.
+Up-to-date documentation: Documentation stays in sync with your code.
+Improved code readability: Encourages developers to write clear and descriptive code comments.
+Reduced errors: Helps prevent documentation errors and inconsistencies.

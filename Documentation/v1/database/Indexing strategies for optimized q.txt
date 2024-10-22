@@ -1,0 +1,245 @@
+Indexing strategies for optimized query performance.
+
+users database
+
+clients:
+
+username: (UNIQUE index) - For fast lookups during login.
+email: (UNIQUE index) - For fast lookups and enforcing uniqueness.
+id: (PRIMARY KEY - implicitly indexed)
+client_details:
+
+client_id: (PRIMARY KEY - implicitly indexed)
+login_logs:
+
+client_id: For efficient retrieval of login logs for a specific user.
+login_time: For querying logs within a specific time range.
+log_id: (PRIMARY KEY - implicitly indexed)
+authorized_ips:
+
+client_id: For finding authorized IPs for a specific user.
+auth_key: (UNIQUE index) - For enforcing uniqueness and fast lookups.
+auth_ip_id: (PRIMARY KEY - implicitly indexed)
+user_settings:
+
+client_id: (UNIQUE index) - To ensure each user has only one settings record.
+settings_id: (PRIMARY KEY - implicitly indexed)
+user_roles:
+
+name: (UNIQUE index) - For efficient role lookups.
+role_id: (PRIMARY KEY - implicitly indexed)
+user_role_assignments:
+
+client_id: For finding roles assigned to a specific user.
+role_id: For finding users assigned to a specific role.
+assignment_id: (PRIMARY KEY - implicitly indexed)
+user_permissions:
+
+name: (UNIQUE index) - For efficient permission lookups.
+permission_id: (PRIMARY KEY - implicitly indexed)
+role_permission_assignments:
+
+role_id: For finding permissions assigned to a specific role.
+permission_id: For finding roles that have a specific permission.
+assignment_id: (PRIMARY KEY - implicitly indexed)
+apps database
+
+apps:
+
+creator_id: For finding apps created by a specific user.
+category: For filtering and searching apps by category.
+status: For querying apps with a specific status (e.g., "approved").
+app_id: (PRIMARY KEY - implicitly indexed)
+app_ratings:
+
+app_id: For finding ratings for a specific app.
+user_id: For finding ratings given by a specific user.
+rating_id: (PRIMARY KEY - implicitly indexed)
+app_categories:
+
+name: (UNIQUE index) - For efficient category lookups.
+category_id: (PRIMARY KEY - implicitly indexed)
+app_category_assignments:
+
+app_id: For finding categories assigned to an app.
+category_id: For finding apps assigned to a category.
+assignment_id: (PRIMARY KEY - implicitly indexed)
+app_tags:
+
+name: (UNIQUE index) - For efficient tag lookups.
+tag_id: (PRIMARY KEY - implicitly indexed)
+app_tag_assignments:
+
+app_id: For finding tags assigned to an app.
+tag_id: For finding apps assigned to a tag.
+assignment_id: (PRIMARY KEY - implicitly indexed)
+app_screenshots:
+
+app_id: For finding screenshots for a specific app.
+screenshot_id: (PRIMARY KEY - implicitly indexed)
+app_versions:
+
+app_id: For finding versions of a specific app.
+version_id: (PRIMARY KEY - implicitly indexed)
+app_dependencies:
+
+app_id: For finding dependencies of a specific app.
+dependency_id: (PRIMARY KEY - implicitly indexed)
+rad_tokens database
+
+rad_transactions:
+
+user_id: For finding transactions for a specific user.
+type: For filtering transactions by type (e.g., "reward," "purchase").
+block_id: For finding transactions within a specific block.
+transaction_id: (PRIMARY KEY - implicitly indexed)
+rad_balances:
+
+user_id: (PRIMARY KEY - implicitly indexed)
+pools:
+
+pool_type: For filtering pools by type (e.g., "liquidity," "staking").
+status: For querying active or inactive pools.
+pool_id: (PRIMARY KEY - implicitly indexed)
+pool_participants:
+
+pool_id: For finding participants in a specific pool.
+user_id: For finding pools a user is participating in.
+participant_id: (PRIMARY KEY - implicitly indexed)
+pool_rewards:
+
+pool_id: For finding rewards distributed by a specific pool.
+user_id: For finding rewards earned by a specific user.
+reward_id: (PRIMARY KEY - implicitly indexed)
+wrad_parameters:
+
+parameter_id: (PRIMARY KEY - implicitly indexed)
+repositories database
+
+repositories:
+
+user_id: For finding repositories owned by a specific user.
+status: For querying active or locked repositories.
+repository_id: (PRIMARY KEY - implicitly indexed)
+repository_files:
+
+repository_id: For finding files within a specific repository.
+file_id: (PRIMARY KEY - implicitly indexed)
+repository_locking_history:
+
+repository_id: For finding the locking history of a specific repository.
+locked_by: For finding repositories locked by a specific user.
+lock_id: (PRIMARY KEY - implicitly indexed)
+repository_access_logs:
+
+repository_id: For finding access logs for a specific repository.
+accessed_by: For finding repositories accessed by a specific user.
+access_log_id: (PRIMARY KEY - implicitly indexed)
+repository_collaborators:
+
+repository_id: For finding collaborators of a specific repository.
+user_id: For finding repositories a user is collaborating on.
+collaborator_id: (PRIMARY KEY - implicitly indexed)
+staking database
+
+staking:
+
+user_id: For finding staking entries for a specific user.
+status: For querying active or inactive staking entries.
+staking_id: (PRIMARY KEY - implicitly indexed)
+validator_details:
+
+user_id: (UNIQUE index) - To ensure each user has only one validator details record.
+validator_id: (PRIMARY KEY - implicitly indexed)
+validator_rewards:
+
+validator_id: For finding rewards earned by a specific validator.
+reward_id: (PRIMARY KEY - implicitly indexed)
+staking_history:
+
+staking_id: For finding the staking history of a specific staking entry.
+history_id: (PRIMARY KEY - implicitly indexed)
+validator_tasks:
+
+name: (UNIQUE index) - For efficient task lookups.
+task_id: (PRIMARY KEY - implicitly indexed)
+validator_task_assignments:
+
+validator_id: For finding tasks assigned to a specific validator.
+task_id: For finding validators assigned to a specific task.
+assignment_id: (PRIMARY KEY - implicitly indexed)
+feed database
+
+posts:
+
+user_id: For finding posts created by a specific user.
+post_id: (PRIMARY KEY - implicitly indexed)
+comments:
+
+post_id: For finding comments for a specific post. user_id`:  For finding comments written by a specific user.
+    *   `comment_id`: (PRIMARY KEY - implicitly indexed)
+
+*   `likes`:
+    *   `post_id`:  For finding likes for a specific post.
+    *   `user_id`:  For finding posts liked by a specific user.
+    *   `like_id`: (PRIMARY KEY - implicitly indexed)
+
+*   `shares`:
+    *   `post_id`:  For finding shares for a specific post.
+    *   `user_id`:  For finding posts shared by a specific user.
+    *   `share_id`: (PRIMARY KEY - implicitly indexed)
+
+*   `post_tags`:
+    *   `name`: (UNIQUE index) - For efficient tag lookups.
+    *   `tag_id`: (PRIMARY KEY - implicitly indexed)
+
+*   `post_tag_assignments`:
+    *   `post_id`:  For finding tags assigned to a post.
+    *   `tag_id`:  For finding posts assigned to a tag.
+    *   `assignment_id`: (PRIMARY KEY - implicitly indexed)
+
+**`games` database**
+
+*   `games`:
+    *   `developer_id`:  For finding games developed by a specific user.
+    *   `genre`:  For filtering and searching games by genre.
+    *   `game_id`: (PRIMARY KEY - implicitly indexed)
+
+*   `game_scores`:
+    *   `game_id`:  For finding scores for a specific game.
+    *   `user_id`:  For finding scores achieved by a specific user.
+    *   `score_id`: (PRIMARY KEY - implicitly indexed)
+
+*   `achievements`:
+    *   `game_id`:  For finding achievements for a specific game.
+    *   `achievement_id`: (PRIMARY KEY - implicitly indexed)
+
+*   `user_achievements`:
+    *   `user_id`:  For finding achievements unlocked by a specific user.
+    *   `achievement_id`:  For finding users who have unlocked a specific achievement.
+    *   `user_achievement_id`: (PRIMARY KEY - implicitly indexed)
+
+*   `game_statistics`:
+    *   `game_id`: (UNIQUE index) - To ensure each game has only one statistics record.
+    *   `stat_id`: (PRIMARY KEY - implicitly indexed)
+
+*   `game_assets`:
+    *   `game_id`:  For finding assets for a specific game.
+    *   `asset_id`: (PRIMARY KEY - implicitly indexed)
+
+
+**Types of Indexes**
+
+*   **PRIMARY KEY:** Automatically creates a unique index on the primary key column(s).
+*   **UNIQUE index:** Ensures that all values in the indexed column are unique.
+*   **Non-unique index:**  Allows duplicate values in the indexed column,   
+ but speeds up lookups based on that column.
+*   **Composite index:**  Creates an index on multiple columns, useful for queries that filter or sort by multiple columns.
+
+**Choosing the right indexes**
+
+*   **Analyze your queries:**  Identify the columns that are frequently used in `WHERE` clauses, `JOIN` conditions, `ORDER BY` clauses, and other operations that require searching or sorting data.
+*   **Consider data cardinality:**  Index columns with high cardinality (many unique values) for better performance.
+*   **Avoid over-indexing:**  Too many indexes can slow down write operations (inserts, updates, deletes).
+
+By carefully selecting and creating indexes, you can significantly improve the performance of your SecureAuth platform's database, especially as the amount of data grows.

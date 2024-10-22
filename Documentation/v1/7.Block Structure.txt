@@ -1,0 +1,71 @@
+Block Structure for SecureAuth Platform
+
+1. Block Header
+
+The block header contains metadata about the block, including:
+
+*   `version`: (INT) - Version number of the block format (e.g., 1). This allows for future updates to the block structure.
+*   `timestamp`: (TIMESTAMP) - The timestamp of when the block was created.
+*   `previousBlockHash`: (STRING) - The hash of the previous block in the chain. This links the blocks together, forming a chain.
+*   `merkleRoot`: (STRING) - The Merkle root hash of all the transactions in the block. This ensures the integrity of the transactions.
+*   `nonce`: (INT) - A number used in the mining process (if applicable) to find a valid block hash.
+*   `difficulty`: (INT) - The difficulty target for the block hash (if using a proof-of-work system).
+
+2. Transaction Data Format
+
+Each transaction within the block will have the following format:
+
+*   `transactionId`: (INT) - A unique identifier for the transaction.
+*   `userId`: (INT) - The ID of the user who initiated the transaction.
+*   `type`: (ENUM) - The type of transaction (e.g., 'reward', 'purchase', 'transfer', 'conversion', 'staking', 'unstaking', 'fee').
+*   `amount`: (DECIMAL) - The amount of RAD or WRAD tokens involved in the transaction.
+*   `currency`: (ENUM) - The currency of the transaction ('RAD' or 'WRAD').
+*   `timestamp`: (TIMESTAMP) - The timestamp of the transaction.
+*   `details`: (STRING) - Optional details about the transaction (e.g., "App purchase", "Staking reward").
+
+3. Block Size Limits
+
+*   `maxTransactions`: (INT) - The maximum number of transactions that can be included in a single block (e.g., 1000).
+*   `maxSizeBytes`: (INT) - The maximum size of the block in bytes (e.g., 1 MB).
+
+Example Block Structure (JSON representation)
+
+```json
+{
+  "header": {
+    "version": 1,
+    "timestamp": "2024-10-28T10:00:00Z",
+    "previousBlockHash": "previous_block_hash_here",
+    "merkleRoot": "merkle_root_hash_here",
+    "nonce": 12345,
+    "difficulty": 100
+  },
+  "transactions": [
+    {
+      "transactionId": 1,
+      "userId": 101,
+      "type": "reward",
+      "amount": 10,
+      "currency": "RAD",
+      "timestamp": "2024-10-28T09:55:00Z",
+      "details": "Daily reward"
+    },
+    {
+      "transactionId": 2,
+      "userId": 102,
+      "type": "purchase",
+      "amount": 50,
+      "currency": "WRAD",
+      "timestamp": "2024-10-28T09:58:00Z",
+      "details": "App purchase"
+    },
+    // ... more transactions
+  ]
+}
+Key Considerations
+
+Block size limits: Choose appropriate block size limits based on factors like transaction frequency, network capacity, and storage limitations.
+Data serialization: Decide how to serialize the block data for storage (e.g., JSON, binary format).
+Block validation: Implement validation rules to ensure that blocks adhere to the defined structure and size limits.
+Data compression: Consider using data compression techniques to reduce the size of blocks and improve storage efficiency.
+Future updates: The version field in the header allows you to update the block structure in the future without breaking compatibility with older blocks.

@@ -1,0 +1,115 @@
+-- Database: staking
+
+CREATE TABLE staking (
+    staking_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP, -- For time-locked staking
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+-- Other tables in the 'staking' database
+
+CREATE TABLE validator_details (
+    validator_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNIQUE NOT NULL, -- One-to-one relationship with users
+    is_kyc_verified BOOLEAN DEFAULT FALSE,
+    validation_score INT DEFAULT 0, -- A score based on validation activities
+    last_activity_at TIMESTAMP NULL, -- Timestamp of the last validation activity
+    FOREIGN KEY (user_id) REFERENCES users.clients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE validator_rewards (
+    reward_id INT AUTO_INCREMENT PRIMARY KEY,
+    validator_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    currency ENUM('RAD', 'WRAD') NOT NULL DEFAULT 'RAD',
+    rewarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    details TEXT, -- Details about the reward (e.g., "App rating reward")
+    FOREIGN KEY (validator_id) REFERENCES validator_details(validator_id) ON DELETE CASCADE
+);
+
+CREATE TABLE staking_history (
+    history_id INT AUTO_INCREMENT PRIMARY KEY,
+    staking_id INT NOT NULL,
+    action ENUM('stake', 'unstake') NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (staking_id) REFERENCES staking(staking_id) ON DELETE CASCADE
+);
+
+CREATE TABLE validator_tasks (  -- Defines tasks validators can perform
+    task_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    reward_amount DECIMAL(10, 2) DEFAULT 0, -- Reward for completing the task
+    currency ENUM('RAD', 'WRAD') NOT NULL DEFAULT 'RAD'
+);
+
+CREATE TABLE validator_task_assignments (  -- Assigns tasks to validators
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    validator_id INT NOT NULL,
+    task_id INT NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP NULL, -- Timestamp when the task was completed
+    FOREIGN KEY (validator_id) REFERENCES validator_details(validator_id) ON DELETE CASCADE,
+    FOREIGN KEY (task_id) REFERENCES validator_tasks(task_id) ON DELETE CASCADE
+);
+Use code with caution.
+
+Explanation of tables:
+
+staking:
+
+staking_id: Unique identifier for each staking entry.
+user_id: ID of the user who staked tokens.
+amount: Amount of RAD tokens staked.
+start_time: Timestamp of when the tokens were staked.
+end_time: Timestamp of when the staking period ends (if applicable, for time-locked staking).
+status: Status of the staking entry ("active" or "inactive").
+validator_details:
+
+validator_id: Unique identifier for each validator.
+user_id: ID of the user who is a validator (one-to-one relationship with users.clients).
+is_kyc_verified: Indicates whether the validator has completed KYC verification.
+validation_score: A score based on the validator's activity and contributions (can be used for rewards or ranking).
+last_activity_at: Timestamp of the validator's last activity.
+validator_rewards:
+
+reward_id: Unique identifier for each reward given to a validator.
+validator_id: ID of the validator receiving the reward.
+amount: Amount of tokens rewarded.
+currency: Type of token rewarded ("RAD" or "WRAD").
+rewarded_at: Timestamp of when the reward was given.
+details: Optional details about the reward (e.g., "App rating reward").
+staking_history:
+
+history_id: Unique identifier for each staking history entry.
+staking_id: ID of the staking entry.
+action: Type of action ("stake" or "unstake").
+amount: Amount of tokens staked or unstaked.
+timestamp: Timestamp of the action.
+validator_tasks:
+
+task_id: Unique identifier for each validator task.
+name: Name of the task.
+description: Description of the task.
+reward_amount: Reward amount for completing the task.
+currency: Type of token rewarded for the task.
+validator_task_assignments:
+
+assignment_id: Unique identifier for each task assignment.
+validator_id: ID of the validator assigned the task.
+task_id: ID of the task.
+assigned_at: Timestamp of when the task was assigned.
+completed_at: Timestamp of when the task was completed (if applicable).
+Key points:
+
+Relationships: Foreign keys ensure referential integrity and define relationships between tables.
+ON DELETE CASCADE: Ensures that related records are deleted when a parent record is deleted.
+Validator details: The validator_details table stores additional information about validators.
+Reward tracking: The validator_rewards table tracks rewards given to validators.
+Staking history: The staking_history table provides a history of staking and unstaking actions.
+Validator tasks: The validator_tasks and validator_task_assignments tables define and track tasks that validators can perform to earn rewards.

@@ -1,0 +1,147 @@
+Relationships between tables (foreign keys).
+
+users database
+
+client_details:
+
+client_id references clients.id (one-to-one relationship)
+login_logs:
+
+client_id references clients.id (one-to-many relationship)
+authorized_ips:
+
+client_id references clients.id (one-to-many relationship)
+user_settings:
+
+client_id references clients.id (one-to-one relationship)
+user_role_assignments:
+
+client_id references clients.id (many-to-many relationship between clients and user_roles via user_role_assignments)
+role_id references user_roles.role_id
+role_permission_assignments:
+
+role_id references user_roles.role_id (many-to-many relationship between user_roles and user_permissions via role_permission_assignments)
+permission_id references user_permissions.permission_id
+apps database
+
+apps:
+
+creator_id references users.clients.id (one-to-many relationship)
+app_ratings:
+
+app_id references apps.app_id (one-to-many relationship)
+user_id references users.clients.id (one-to-many relationship)
+app_category_assignments:
+
+app_id references apps.app_id (many-to-many relationship between apps and app_categories via app_category_assignments)
+category_id references app_categories.category_id
+app_tag_assignments:
+
+app_id references apps.app_id (many-to-many relationship between apps and app_tags via app_tag_assignments)
+tag_id references app_tags.tag_id
+app_screenshots:
+
+app_id references apps.app_id (one-to-many relationship)
+app_versions:
+
+app_id references apps.app_id (one-to-many relationship)
+app_dependencies:
+
+app_id references apps.app_id (one-to-many relationship)
+rad_tokens database
+
+rad_transactions:
+
+user_id references users.clients.id (one-to-many relationship)
+rad_balances:
+
+user_id references users.clients.id (one-to-one relationship)
+pool_participants:
+
+pool_id references pools.pool_id (many-to-many relationship between clients and pools via pool_participants)
+user_id references users.clients.id
+pool_rewards:
+
+pool_id references pools.pool_id (one-to-many relationship)
+user_id references users.clients.id (one-to-many relationship)
+repositories database
+
+repositories:
+
+user_id references users.clients.id (one-to-many relationship)
+repository_files:
+
+repository_id references repositories.repository_id (one-to-many relationship)
+repository_locking_history:
+
+repository_id references repositories.repository_id (one-to-many relationship)
+locked_by references users.clients.id (one-to-many relationship)
+repository_access_logs:
+
+repository_id references repositories.repository_id (one-to-many relationship)
+accessed_by references users.clients.id (one-to-many relationship)
+repository_collaborators:
+
+repository_id references repositories.repository_id (many-to-many relationship between clients and repositories via repository_collaborators)
+user_id references users.clients.id
+staking database
+
+staking:
+
+user_id references users.clients.id (one-to-many relationship)
+validator_details:
+
+user_id references users.clients.id (one-to-one relationship)
+validator_rewards:
+
+validator_id references validator_details.validator_id (one-to-many relationship)
+staking_history:
+
+staking_id references staking.staking_id (one-to-many relationship)
+validator_task_assignments:
+
+validator_id references validator_details.validator_id (many-to-many relationship between validator_details and validator_tasks via validator_task_assignments)
+task_id references validator_tasks.task_id
+feed database
+
+posts:
+
+user_id references users.clients.id (one-to-many relationship)
+comments:
+
+post_id references posts.post_id (one-to-many relationship)
+user_id references users.clients.id (one-to-many relationship)
+likes:
+
+post_id references posts.post_id (one-to-many relationship)
+user_id references users.clients.id (one-to-many relationship)
+shares:
+
+post_id references posts.post_id (one-to-many relationship)
+user_id references users.clients.id (one-to-many relationship)
+post_tag_assignments:
+
+post_id references posts.post_id (many-to-many relationship between posts and post_tags via post_tag_assignments)
+tag_id references post_tags.tag_id
+games database
+
+games:
+
+developer_id references users.clients.id (one-to-many relationship)
+game_scores:
+
+game_id references games.game_id (one-to-many relationship)
+user_id references users.clients.id (one-to-many relationship)
+achievements:
+
+game_id references games.game_id (one-to-many relationship)
+user_achievements:
+
+user_id references users.clients.id (one-to-many relationship)
+achievement_id references achievements.achievement_id (one-to-many relationship)
+game_statistics:
+
+game_id references games.game_id (one-to-one relationship)
+game_assets:
+
+game_id references games.game_id (one-to-many relationship)
